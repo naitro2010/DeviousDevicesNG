@@ -97,12 +97,12 @@ Function EvaluateAA(actor akActor)
 		libs.log("EvaluateAA: Reverting to unbound AA")		
 		ClearAA(akActor)
 		RemoveBCPerks(akActor)
-		if (akActor == libs.PlayerRef)
-		   libs.DisableVA()
+    if (akActor == libs.PlayerRef)
+		  libs.DisableVA()
 		EndIf
 	Else
-		if (akActor == libs.PlayerRef)
-		   libs.EnableVA()
+    if (akActor == libs.PlayerRef)
+		  libs.EnableVA()
 		EndIf
 		ApplyBCPerks(akActor)	
 	endif
