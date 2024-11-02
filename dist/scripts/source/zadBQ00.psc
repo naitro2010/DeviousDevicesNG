@@ -235,7 +235,11 @@ Function Maintenance()
 	; Generic Devices
 	If regDevices
 		libs.RegisterDevices() ; Might take a while, do it last
-	EndIf	
+	EndIf
+  libs.EnableVRSupport = (Game.GetModByName("vrikForceAction.esp") != 255)
+  if libs.EnableVRSupport
+    libs._vrikActions = (Game.GetFormFromFile(0x000D61, "vrikForceAction.esp") as _vrikAction_qust_mcm).VRIKActionsConf
+  EndIf
 EndFunction
 
 
@@ -282,7 +286,7 @@ Function CheckNativePlugins()
     if !zadNativeFunctions.PluginInstalled("mfgfix.dll")
         Debug.MessageBox("-Devious Devices-\n Can't find mfgfix.dll. Please install the Mfg Fix, otherwise the expressions will not work correctly!")
     endif
-    if !zadNativeFunctions.PluginInstalled("skee64.dll")
+    if !zadNativeFunctions.PluginInstalled("skee64.dll") && !zadNativeFunctions.PluginInstalled("skeevr.dll")
         Debug.MessageBox("-Devious Devices-\n Can't find skee64.dll. Please install the Racemenu, otherwise the mod will not work correctly!")
     endif
 EndFunction

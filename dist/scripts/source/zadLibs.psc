@@ -33,7 +33,8 @@ zadBoundCombatScript Property BoundCombat auto
 Int Property TweenMenuKey Auto
 bool Property Terminate Auto
 zadexpressionlibs Property ExpLibs auto ;expression libs
-
+vrikActions Property _vrikActions = None Auto
+  
 ; Keywords
 Keyword Property zad_DeviousPlug Auto
 Keyword Property zad_DeviousBelt Auto
@@ -268,6 +269,8 @@ Bool Property DeviceMutex Auto ; Prevent oddities when swapping sets of items qu
 Bool Property GlobalEventFlag Auto ; Events enabled/disabled, globally. Useful for scenes that don't want to be interrupted.
 bool Property RepopulateMutex Auto ; Avoid 2.6.3 bug
 Float Property lastRepopulateTime Auto ; Avoid 2.6.3 bug
+bool Property EnableVRSupport = False Auto
+  
 ; Misc
 Actor Property PlayerRef Auto
 Faction Property SexLabAnimatingFaction Auto
@@ -779,8 +782,12 @@ Function PlayHornyAnimation(actor akActor)
 	if akActor == playerref && playerref.IsInCombat() 
 		return 
 	Endif	
-	
-	PlayThirdPersonAnimation(akActor, "DDZazHornyA", 19, permitRestrictive=true)
+
+  if EnableVRSupport
+    PlayThirdPersonAnimation(akActor, "DDZazHornyA", 3, permitRestrictive=true)
+  else
+	  PlayThirdPersonAnimation(akActor, "DDZazHornyA", 19, permitRestrictive=true)
+  EndIf
 
 EndFunction
 
@@ -792,8 +799,12 @@ Function Orgasm(actor akActor)
 	Aroused.UpdateActorOrgasmDate(akActor)
 	if !IsAnimating(akActor)
 		bool[] cameraState = StartThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Orgasm"), true)
-		Utility.Wait(20)
-	    EndThirdPersonAnimation(akActor, cameraState, true)
+    if EnableVRSupport
+		  Utility.Wait(4)
+    else
+      Utility.Wait(20)
+    EndIf
+	  EndThirdPersonAnimation(akActor, cameraState, true)
 	Else		
 	EndIf
 EndFunction
@@ -1769,7 +1780,11 @@ Function EdgeActor(actor akActor)
     SendEdgeEvent(akActor)
 	int sID = EdgedSound.Play(akActor)
 	Sound.SetInstanceVolume(sid, Config.VolumeEdged)
-	PlayThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Edged"), 19, permitRestrictive=true)
+  if EnableVRSupport
+  	PlayThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Edged"), 3, permitRestrictive=true)
+  else
+    PlayThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Edged"), 19, permitRestrictive=true)
+  EndIf
 EndFunction
 
 
@@ -1986,8 +2001,10 @@ int Function VibrateEffectV2(actor akActor, int vibStrength, int duration, bool 
 	; Start base expression
 	sslBaseExpression expression = SexLab.RandomExpressionByTag("Pleasure")
 	ApplyExpression_v2(akActor, expression, 15, Math.Ceiling(Aroused.GetActorExposure(akActor)*0.6), openMouth=false) ;do not open mouth
-	if Utility.RandomInt() <= (10*vibStrength) 
-		PlayThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Horny"), 3, permitRestrictive=true)
+	if Utility.RandomInt() <= (10*vibStrength)
+    if !EnableVRSupport
+		  PlayThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Horny"), 3, permitRestrictive=true)
+    EndIf
 	EndIf
 	
 	; Actor in combat?
@@ -2064,7 +2081,9 @@ int Function VibrateEffectV2(actor akActor, int vibStrength, int duration, bool 
 			; Log("XXX Starting Horny Idle")
 			ApplyExpression(akActor, expression, (Aroused.GetActorExposure(akActor) * 0.75) as Int, openMouth=true)
 			; Select animation
-			cameraState=StartThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Horny"), permitRestrictive=true)
+      if !EnableVRSupport
+			  cameraState=StartThirdPersonAnimation(akActor, AnimSwitchKeyword(akActor, "Horny"), permitRestrictive=true)
+      EndIf
 			vibAnimStarted = timeVibrated + 1
 			; Log("XXX VibrateEffect: Done starting horny idle")
 		EndIf
@@ -2524,7 +2543,11 @@ Function ChastityBeltStruggle(actor akActor)
 	Endif
 	; use PlayThirdPersonAnimation instead of StartThirdPersonAnimation for non-looping animation
 	; alternatively EndThirdPersonAnimation can be called manually if termination is conditional
-	PlayThirdPersonAnimation(akActor, "DDChastityBeltStruggle0" + Utility.RandomInt(1, 2), Utility.RandomInt(5, 30), true)
+  if EnableVRSupport
+    PlayThirdPersonAnimation(akActor, "DDChastityBeltStruggle0" + Utility.RandomInt(1, 2), Utility.RandomInt(3, 4), true)
+  else
+    PlayThirdPersonAnimation(akActor, "DDChastityBeltStruggle0" + Utility.RandomInt(1, 2), Utility.RandomInt(5, 30), true)
+  endif
 	Aroused.UpdateActorExposure(akActor, 5)
 	If akActor == PlayerRef
 		notify("You tug at your chastity belt, but it won't come off!")
@@ -2552,8 +2575,12 @@ Function Trip(actor akActor)
 	; use PlayThirdPersonAnimation instead of StartThirdPersonAnimation for non-looping animation
 	; alternatively EndThirdPersonAnimation can be called manually if termination is conditional
 	
-	; OAR NOW REPLACES ANIMATIONS BASED ON KEYWORDS - krzp								   
-	PlayThirdPersonAnimation(akActor, "ft_fall_over_reg_1", 8, true)
+	; OAR NOW REPLACES ANIMATIONS BASED ON KEYWORDS - krzp
+  if EnableVRSupport
+  	PlayThirdPersonAnimation(akActor, "ft_fall_over_reg_1", 2, true)
+  else
+    PlayThirdPersonAnimation(akActor, "ft_fall_over_reg_1", 8, true)
+  EndIf
 		
 	SexlabMoan(akActor)
 EndFunction
@@ -2573,7 +2600,11 @@ Function CatchBreath(actor akActor)
 	; alternatively EndThirdPersonAnimation can be called manually if termination is conditional
 	
 	; OAR NOW REPLACES THEM BASED ON KEYWORDS - krzp
-		PlayThirdPersonAnimation(akActor, "ft_out_of_breath_reg", 5, true)
+  if EnableVRSupport
+		PlayThirdPersonAnimation(akActor, "ft_out_of_breath_reg", 2, true)
+  else
+    PlayThirdPersonAnimation(akActor, "ft_out_of_breath_reg", 5, true)
+  EndIf
 	
 	SexlabMoan(akActor)
 EndFunction
@@ -3355,4 +3386,21 @@ EndFunction
 
 bool Function UpdateCorsetState(actor akActor)
 	return false
+EndFunction
+
+function enableVA()
+  if EnableVRSupport
+    _vrikActions.VAC_allTime = True
+    _vrikActions.VAC_HandMode = 0
+    _vrikActions.VAC_noMove_HandMode = 0
+    _vrikActions.VAC_noControl_HandMode = 0
+    _vrikActions.EnableVA()
+  EndIf
+EndFunction
+
+function disableVA()
+  if EnableVRSupport
+    _vrikActions.VAC_allTime = False
+  EndIf
+  ; vrikActions.DisableVA()
 EndFunction
