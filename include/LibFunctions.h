@@ -74,7 +74,9 @@ namespace DeviousDevices
         bool IsBound(RE::Actor* a_actor) const;
         BondageState GetBondageState(RE::Actor* a_actor) const;
         bool WornHasKeyword(RE::Actor* a_actor, RE::BGSKeyword* a_kw) const;
+        bool WornHasKeywordAll(RE::Actor* a_actor, RE::BGSKeyword* a_kw) const;
         bool WornHasKeyword(RE::Actor* a_actor, std::string a_kw) const;
+        bool WornHasKeywordAll(RE::Actor* a_actor, std::string a_kw) const;
         RE::TESObjectARMO* GetWornArmor(RE::Actor* a_actor,int a_mask) const;
         // Return first armor with passed keyword string
         RE::TESObjectARMO* GetWornArmor(RE::Actor* a_actor,const std::string& a_kw) const;

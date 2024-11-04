@@ -85,6 +85,7 @@ int FurnitureNPCActionKeyDefault = 0xC9
 ; Tooltips
 bool Property BlindfoldTooltip Auto
 bool Property GagTooltip Auto
+bool Property MuffleTooltip Auto
 
 ; Events and Effects
 float Property EventInterval = 1.5 Auto
@@ -117,6 +118,12 @@ float Property VolumeVibratorNPC = 0.25 Auto
 float volumeVibratorNPCDefault = 0.25
 int Property RubberSoundMode = 0 Auto
 int RubberSoundModeDefault = 0
+
+; Muffle effect
+float Property VolumeMuffled = 0.2 Auto
+float volumeMuffledDefault = 0.2
+float Property VolumeMuffleWhiteNoise = 0.5 Auto
+float volumeMuffleWhiteNoiseDefault = 0.5
 
 ; Quest Monitor Configuration 
 bool Property ForbiddenTome = true Auto
@@ -195,6 +202,8 @@ int VolumeOrgasmOID
 int VolumeEdgedOID
 int VolumeVibratorOID
 int VolumeVibratorNPCOID
+int VolumeMuffleOID
+int VolumeMuffleWhiteNoiseOID
 int ForbiddenTomeOID
 int SergiusExperimentOID
 int SurreptitiousStreetsOID
@@ -359,7 +368,7 @@ Event OnConfigInit()
 EndEvent
 
 int Function GetVersion()
-	return 30 ; mcm menu version
+	return 31 ; mcm menu version
 EndFunction
 
 Event OnVersionUpdate(int newVersion)
@@ -431,6 +440,9 @@ Event OnPageReset(string page)
                 blindfoldStrengthOID = AddSliderOption("Blindfold Strength", blindfoldStrength, "{2}",OPTION_FLAG_DISABLED)
                 darkfogStrengthOID = AddSliderOption("Dark Fog Strength", darkfogStrength, "{0}")
             endif
+			AddHeaderOption("Muffle Options")
+			VolumeMuffleOID = AddSliderOption("Muffled Volume", VolumeMuffled, "{3}")
+			VolumeMuffleWhiteNoiseOID = AddSliderOption("Muffle Noise Volume", VolumeMuffleWhiteNoise, "{3}")
 			
 			AddHeaderOption("Bra Options")
 			if libs.PlayerRef.WornHasKeyword(libs.zad_DeviousBra)
@@ -458,10 +470,13 @@ Event OnPageReset(string page)
 	ElseIf page == "Animations"
 		SetCursorFillMode(TOP_TO_BOTTOM)		
 		AddHeaderOption("Animation Options")
+
+		AddTextOption("Disabled due to PAR", "")
+
 		;useAnimFilterOID = AddToggleOption("Use Animation Filter", useAnimFilter)
-		preserveAggroOID = AddToggleOption("Preserve Scene Aggressiveness", preserveAggro)
-		useBoundAnimsOID = AddToggleOption("Use Bound Animations", useBoundAnims)
-		useAnimFilterCreaturesOID = AddToggleOption("Use Animation Filter for Creatures", useAnimFilterCreatures)
+		;preserveAggroOID = AddToggleOption("Preserve Scene Aggressiveness", preserveAggro)
+		;useBoundAnimsOID = AddToggleOption("Use Bound Animations", useBoundAnims)
+		;useAnimFilterCreaturesOID = AddToggleOption("Use Animation Filter for Creatures", useAnimFilterCreatures)
 	ElseIf page == "Events and Effects"
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		AddHeaderOption("Global Events/Effects Configuration")
@@ -709,6 +724,16 @@ Event OnOptionSliderOpen(int option)
 		SetSliderDialogDefaultValue(darkfogStrengthDefault)
 		SetSliderDialogRange(50,3000)
 		SetSliderDialogInterval(50)
+	elseif option == VolumeMuffleOID
+		SetSliderDialogStartValue(VolumeMuffled)
+		SetSliderDialogDefaultValue(volumeMuffledDefault)
+		SetSliderDialogRange(0.0,1.0)
+		SetSliderDialogInterval(0.01)
+	elseif option == VolumeMuffleWhiteNoiseOID
+		SetSliderDialogStartValue(VolumeMuffleWhiteNoise)
+		SetSliderDialogDefaultValue(volumeMuffleWhiteNoiseDefault)
+		SetSliderDialogRange(0.0,1.0)
+		SetSliderDialogInterval(0.01)
 	elseif option == beltRateOID
 		SetSliderDialogStartValue(BeltRateMult)
 		SetSliderDialogDefaultValue(beltRateDefault)
@@ -966,6 +991,14 @@ Event OnOptionDefault(int option)
 		darkfogStrength = darkfogStrengthDefault
 		SetSliderOptionValue(darkfogStrengthOID, darkfogStrengthDefault, "{0}")
         SendModEvent("zadBlindfoldEffectUpdate")
+	elseif (option == VolumeMuffleOID)
+		VolumeMuffled = volumeMuffledDefault
+		SetSliderOptionValue(VolumeMuffleOID, volumeMuffledDefault, "{3}")
+        SendModEvent("zadMuffleEffectUpdate")
+	elseif (option == VolumeMuffleWhiteNoise)
+		VolumeMuffleWhiteNoise = VolumeMuffleWhiteNoiseDefault
+		SetSliderOptionValue(VolumeMuffleWhiteNoiseOID, VolumeMuffleWhiteNoiseDefault, "{3}")
+        SendModEvent("zadMuffleEffectUpdate")
 	elseIf (option == beltRateOID)
 		BeltRateMult = beltRateDefault
 		SetSliderOptionValue(beltRateOID, beltRateDefault, "{1}")
@@ -1141,6 +1174,10 @@ Event OnOptionHighlight(int option)
 		SetInfoText("Controls the strength of the blindfold effect.\nDefault:"+blindfoldStrengthDefault)
 	elseif (option == darkfogStrengthOID)
 		SetInfoText("Controls the strength of the dark fog effect.\nDefault:"+darkfogStrengthDefault)
+	elseif (option == VolumeMuffleOID)
+		SetInfoText("Controls how much sound is muffled while wearing hoods or other sound muffling devices.\nDefault:"+VolumeMuffledDefault)
+	elseif (option == VolumeMuffleWhiteNoiseOID)
+		SetInfoText("Controls how loud the white noise sound is while wearing hoods or other sound muffling devices.\nDefault:"+VolumeMuffleWhiteNoiseDefault)
 	elseIf (option == beltRateOID)
 		SetInfoText("Arousal exposure multiplier while belted.\nDefault: "+beltRateDefault)
 	elseIf (option == plugRateOID)
@@ -1282,6 +1319,14 @@ Event OnOptionSliderAccept(int option, float value)
 		darkfogStrength = value as int
 		SetSliderOptionValue(option, value, "{0}")
         SendModEvent("zadBlindfoldEffectUpdate")
+	elseif (option == VolumeMuffleOID)
+		VolumeMuffled = value
+		SetSliderOptionValue(option, value, "{3}")
+        SendModEvent("zadMuffleEffectUpdate")
+	elseif (option == VolumeMuffleWhiteNoiseOID)
+		VolumeMuffleWhiteNoise = value
+		SetSliderOptionValue(option, value, "{3}")
+        SendModEvent("zadMuffleEffectUpdate")
 	elseIf (option == beltRateOID)
 		BeltRateMult = value
 		SetSliderOptionValue(option, value, "{1}")
@@ -1454,9 +1499,12 @@ function ExportSettings()
 	ExportFloat("blindfoldStrength", blindfoldStrength);EXPORTAUTOGEN
 	ExportInt("darkfogStrength", darkfogStrength);EXPORTAUTOGEN
 	ExportInt("darkfogStrength2", darkfogStrength2);EXPORTAUTOGEN
+	ExportFloat("volumeMuffled", volumeMuffled);EXPORTAUTOGEN
+	ExportFloat("volumeMuffleWhiteNoise", volumeMuffleWhiteNoise);EXPORTAUTOGEN
 	ExportInt("FurnitureNPCActionKey", FurnitureNPCActionKey);EXPORTAUTOGEN
 	ExportBool("BlindfoldTooltip", BlindfoldTooltip);EXPORTAUTOGEN
 	ExportBool("GagTooltip", GagTooltip);EXPORTAUTOGEN
+	ExportBool("MuffleTooltip", MuffleTooltip);EXPORTAUTOGEN
 	ExportFloat("EventInterval", EventInterval);EXPORTAUTOGEN
 	ExportInt("EffectVibrateChance", EffectVibrateChance);EXPORTAUTOGEN
 	ExportInt("EffectHealthDrainChance", EffectHealthDrainChance);EXPORTAUTOGEN
@@ -1529,8 +1577,11 @@ function ImportSettings()
 	blindfoldStrength = ImportFloat("blindfoldStrength", blindfoldStrength);IMPORTAUTOGEN
 	darkfogStrength = ImportInt("darkfogStrength", darkfogStrength);IMPORTAUTOGEN
 	darkfogStrength2 = ImportInt("darkfogStrength2", darkfogStrength2);IMPORTAUTOGEN
+	volumeMuffled = ImportFloat("volumeMuffled", volumeMuffled);IMPORTAUTOGEN
+	volumeMuffleWhiteNoise = ImportFloat("volumeMuffleWhiteNoise", volumeMuffleWhiteNoise);IMPORTAUTOGEN
 	FurnitureNPCActionKey = ImportInt("FurnitureNPCActionKey", FurnitureNPCActionKey);IMPORTAUTOGEN
 	BlindfoldTooltip = ImportBool("BlindfoldTooltip", BlindfoldTooltip);IMPORTAUTOGEN
+	MuffleTooltip = ImportBool("MuffleTooltip", MuffleTooltip);IMPORTAUTOGEN
 	GagTooltip = ImportBool("GagTooltip", GagTooltip);IMPORTAUTOGEN
 	EventInterval = ImportFloat("EventInterval", EventInterval);IMPORTAUTOGEN
 	EffectVibrateChance = ImportInt("EffectVibrateChance", EffectVibrateChance);IMPORTAUTOGEN
