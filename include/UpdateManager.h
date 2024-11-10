@@ -3,6 +3,7 @@
 #include "NodeHider.h"
 #include "Expression.h"
 #include "Config.h"
+#include "HooksVirtual.h"
 
 namespace DeviousDevices
 {
@@ -15,6 +16,7 @@ namespace DeviousDevices
         bool UpdateThread1 = false;
         bool UpdateThread2 = false;
         bool UpdateThread3 = false;
+        bool UpdateThread4 = false;
     private:
         bool _installed = false;
         static void UpdatePlayer(RE::Actor* a_actor, float a_delta);

@@ -62,6 +62,19 @@ void DeviousDevices::UpdateManager::UpdatePlayer(RE::Actor* a_actor, float a_del
                 loc_manager->UpdateThread3 = false;
             }).detach();
         }
+
+        if (!loc_manager->UpdateThread4) 
+        {
+            loc_manager->UpdateThread4 = true;
+            HooksVirtual::GetSingleton()->Update();
+            std::thread([loc_manager]
+            {
+                //wait
+                std::this_thread::sleep_for(std::chrono::milliseconds(1500)); //wait 1500 ms before updating again
+                loc_manager->UpdateThread4 = false;
+            }).detach();
+        }
+
         ExpressionManager::GetSingleton()->IncUpdateCounter();
         NodeHider::GetSingleton()->IncUpdateCounter();
     }

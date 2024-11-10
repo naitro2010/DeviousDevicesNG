@@ -1,5 +1,6 @@
 #include "HooksVirtual.h"
 #include "HooksVirtual.h"
+#include "HooksVirtual.h"
 #include "LibFunctions.h"
 
 SINGLETONBODY(DeviousDevices::HooksVirtual)
@@ -27,22 +28,14 @@ void DeviousDevices::HooksVirtual::ProcessButton(RE::MovementHandler* a_this, RE
     // calculate amplitude
     const float loc_ampl = a_data->moveInputVec.Length();
 
+    static const auto loc_self = GetSingleton();
     static const float loc_maxspeed = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSpeedMult",0.15f);
 
-    if (loc_ampl > loc_maxspeed)
+    if (loc_ampl > loc_maxspeed && loc_self->_PlayerForceWalk)
     {
-        static auto loc_kwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asForceWalkKeywords",false);
-    
-        for (auto&& it :loc_kwds)
-        {
-            if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
-            {
-                // recalculate vector, so the direction of pointing is same, but the amplitude is reduced
-                a_data->moveInputVec.x = (a_data->moveInputVec.x)*loc_maxspeed;
-                a_data->moveInputVec.y = (a_data->moveInputVec.y)*loc_maxspeed;
-                return;
-            }
-        }
+        // recalculate vector, so the direction of pointing is same, but the amplitude is reduced
+        a_data->moveInputVec.x = (a_data->moveInputVec.x)*loc_maxspeed;
+        a_data->moveInputVec.y = (a_data->moveInputVec.y)*loc_maxspeed;
     }
 }
 
@@ -59,38 +52,52 @@ void DeviousDevices::HooksVirtual::ProcessThumbstick(RE::MovementHandler* a_this
     // calculate amplitude
     const float loc_ampl = a_data->moveInputVec.Length();
 
+    static const auto loc_self = GetSingleton();
     static const float loc_maxspeed = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSpeedMult",0.15f);
 
-    if (loc_ampl > loc_maxspeed)
+    if (loc_ampl > loc_maxspeed && loc_self->_PlayerForceWalk)
     {
-        static auto loc_kwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asForceWalkKeywords",false);
-    
-        for (auto&& it :loc_kwds)
-        {
-            if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
-            {
-                // recalculate vector, so the direction of pointing is same, but the amplitude is reduced
-                a_data->moveInputVec.x = (a_data->moveInputVec.x)*loc_maxspeed;
-                a_data->moveInputVec.y = (a_data->moveInputVec.y)*loc_maxspeed;
-                return;
-            }
-        }
+        // recalculate vector, so the direction of pointing is same, but the amplitude is reduced
+        a_data->moveInputVec.x = (a_data->moveInputVec.x)*loc_maxspeed;
+        a_data->moveInputVec.y = (a_data->moveInputVec.y)*loc_maxspeed;
     }
 }
 
 void DeviousDevices::HooksVirtual::DrawWeaponMagicHands(RE::PlayerCharacter* a_this, bool a_draw)
 {
-    if (a_draw)
+    static const auto loc_self = GetSingleton();
+    if (a_draw && loc_self->_PlayerDisableDraw)
     {
-        static auto loc_kwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asDisableCombatKeywords",false);
-    
-        for (auto&& it :loc_kwds)
-        {
-            if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
-            {
-                return;
-            }
-        }
+        return;
     }
     DrawWeaponMagicHands_old(a_this,a_draw);
+}
+
+void DeviousDevices::HooksVirtual::Update()
+{
+    DEBUG("HooksVirtual::Update()")
+
+    static auto loc_disablecombatkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asDisableCombatKeywords",false);
+    
+    _PlayerDisableDraw = false;
+    for (auto&& it :loc_disablecombatkwds)
+    {
+        if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
+        {
+            _PlayerDisableDraw = true;
+            break;
+        }
+    }
+    
+    static auto loc_forcewalkkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asForceWalkKeywords",false);
+    
+    _PlayerForceWalk = false;
+    for (auto&& it :loc_forcewalkkwds)
+    {
+        if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
+        {
+            _PlayerForceWalk = true;
+            break;
+        }
+    }
 }
