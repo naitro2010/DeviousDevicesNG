@@ -471,12 +471,12 @@ Event OnPageReset(string page)
 		SetCursorFillMode(TOP_TO_BOTTOM)		
 		AddHeaderOption("Animation Options")
 
-		AddTextOption("Disabled due to PAR", "")
+		AddTextOption("To use PAR, turn off these three options:\n", "")
 
 		;useAnimFilterOID = AddToggleOption("Use Animation Filter", useAnimFilter)
-		;preserveAggroOID = AddToggleOption("Preserve Scene Aggressiveness", preserveAggro)
-		;useBoundAnimsOID = AddToggleOption("Use Bound Animations", useBoundAnims)
-		;useAnimFilterCreaturesOID = AddToggleOption("Use Animation Filter for Creatures", useAnimFilterCreatures)
+		preserveAggroOID = AddToggleOption("Preserve Scene Aggressiveness", preserveAggro)
+		useBoundAnimsOID = AddToggleOption("Use Bound Animations", useBoundAnims)
+		useAnimFilterCreaturesOID = AddToggleOption("Use Animation Filter for Creatures", useAnimFilterCreatures)
 	ElseIf page == "Events and Effects"
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		AddHeaderOption("Global Events/Effects Configuration")
