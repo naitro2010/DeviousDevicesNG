@@ -1204,7 +1204,7 @@ Bool Function StartValidDDAnimation(Actor[] SexActors, bool forceaggressive = fa
 	If Sanims.Length <= 0
 		; no valid animations yet. Trying fallbacks: Hide bindings
 		libs.log("StartValidDDAnimation(): No valid animations yet: Removing bindings")
-		StoreHeavyBondage(SexActors)
+		;StoreHeavyBondage(SexActors)
 		SAnims = SelectValidDDAnimations(SexActors, SexActors.Length, forceaggressive = forceaggressive, includetag = includetag, suppresstag = suppresstag)
 	EndIf
 	If Sanims.Length <= 0
@@ -1310,7 +1310,7 @@ function Logic(int threadID, bool HasPlayer)
 	
 	if !NoBindings && !libs.config.useBoundAnims ; Actor is bound, config specifies to not use bound anims.
 		libs.Log("One or more actors were bound, but bound animations are disabled in MCM. Removing bindings.")
-		StoreHeavyBondage(originalActors)
+		;StoreHeavyBondage(originalActors)
 		UsingHeavyBondage = False
 		NoBindings = True
 		HasBoundActors = False
@@ -1333,7 +1333,7 @@ function Logic(int threadID, bool HasPlayer)
 		if !NoBindings && !isInvalidAnim
 			if AllowRemoveBindings		
 				libs.Log("Animation involves creatures but is otherwise valid. Removing bindings.")
-				StoreHeavyBondage(originalActors)				
+				;StoreHeavyBondage(originalActors)				
 				NoBindings = True			
 				HasBoundActors = False
 				return			
@@ -1343,7 +1343,7 @@ function Logic(int threadID, bool HasPlayer)
 		if !NoBindings && isInvalidAnim
 			if AllowRemoveBindings		
 				libs.Log("Animation involves creatures and needs replacement. Removing bindings.")
-				StoreHeavyBondage(originalActors)
+				;StoreHeavyBondage(originalActors)
 				UsingHeavyBondage = False
 				NoBindings = True
 				HasBoundActors = False				
@@ -1365,7 +1365,7 @@ function Logic(int threadID, bool HasPlayer)
 			; just the most basic fallBack.
 			if originalActors.length == 2 && !AnimHasNoProblematicDevices(Controller)
 				libs.Log("No bound animation for this setup. Hiding problematic restraints.")
-				StoreHeavyBondage(originalActors)
+				;StoreHeavyBondage(originalActors)
 				UsingHeavyBondage = False
 				NoBindings = True
 				HasBoundActors = False
@@ -1375,7 +1375,7 @@ function Logic(int threadID, bool HasPlayer)
 			; try more comprehensive fallbacks
 			if !NoBindings
 				libs.Log("No bound animation for this setup. Hiding restraints.")
-				StoreHeavyBondage(originalActors)
+				;StoreHeavyBondage(originalActors)
 				UsingHeavyBondage = False
 				NoBindings = True
 				HasBoundActors = False
@@ -1405,7 +1405,7 @@ function Logic(int threadID, bool HasPlayer)
 		if originalActors.length > 3 ; 4 and 5-actor animations are a huge edge case. There are not many available and chances for the filter to find a working animation when actors are restrained or wearing chastity are close to zero. Let's just hide restraints and/or chastity and try again.
 			if !NoBindings
 				libs.Log("Animation features more than 3 actors. Hiding restraints.")
-				StoreHeavyBondage(originalActors)
+				;StoreHeavyBondage(originalActors)
 				UsingHeavyBondage = False
 				NoBindings = True
 				HasBoundActors = False
@@ -1482,7 +1482,7 @@ function Logic(int threadID, bool HasPlayer)
 			 if workaroundID == 1 && !NoBindings ; No anims, while bound.
 				;Still no animations after resizing actors. Drop bindings, and try again.
 				libs.Log("Removing heavy restraints, Trying to resize actors...")
-				StoreHeavyBondage(originalActors)			
+				;StoreHeavyBondage(originalActors)			
 				;UsingArmbinder = False
 				;UsingYoke = False
 				UsingHeavyBondage = False
