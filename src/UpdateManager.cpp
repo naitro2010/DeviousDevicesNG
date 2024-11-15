@@ -66,7 +66,7 @@ void DeviousDevices::UpdateManager::UpdatePlayer(RE::Actor* a_actor, float a_del
         if (!loc_manager->UpdateThread4) 
         {
             loc_manager->UpdateThread4 = true;
-            HooksVirtual::GetSingleton()->Update();
+            MovementManager::GetSingleton()->Update();
             std::thread([loc_manager]
             {
                 //wait

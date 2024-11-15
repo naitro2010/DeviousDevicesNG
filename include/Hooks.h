@@ -4,6 +4,7 @@
 #include "InventoryFilter.h"
 #include <detours/detours.h>
 #include "Script.hpp"
+#include "MovementManager.h"
 
 namespace DeviousDevices {
     namespace Hooks {
@@ -100,6 +101,56 @@ namespace DeviousDevices {
             }
         };
       
+        struct UpdateMovementSpeedHook {
+            static float thunk(RE::AIProcess& a1, float a2) 
+            {
+                if (a1.GetUserData() && a1.GetUserData()->IsPlayerRef())
+                {
+                    static auto loc_manager = MovementManager::GetSingleton();
+                    a2 = (loc_manager->ManageSpeed(a1.GetUserData(),a2));
+                }
+
+                return func(a1,a2);
+            }
+            static inline REL::Relocation<decltype(thunk)> func;
+
+            static inline void Install() 
+            {
+                // Will be used for NPCs in future
+
+                //const uintptr_t loc_UpdateMovementAddress = RELOCATION_ID(0, 39873).address();
+                //func = (decltype(func))loc_UpdateMovementAddress;
+                //
+                //DetourTransactionBegin();
+                //DetourUpdateThread(GetCurrentThread());
+                //DetourAttach(&(PVOID&)func, (PBYTE)&thunk);
+            }
+        };
+
+        struct UpdateAutoMoveHook {
+            static bool thunk(RE::PlayerControls* a_pc) 
+            {
+                static auto loc_manager = MovementManager::GetSingleton();
+                bool loc_res = func(a_pc);
+                loc_manager->ManageAutoMove(a_pc);
+                return loc_res;
+            }
+            static inline REL::Relocation<decltype(thunk)> func;
+
+            static inline void Install() 
+            {
+                const uintptr_t loc_UpdatePlayerMovementAddress = RELOCATION_ID(41291, 42371).address();
+                func = (decltype(func))loc_UpdatePlayerMovementAddress;
+                
+                DetourTransactionBegin();
+                DetourUpdateThread(GetCurrentThread());
+                DetourAttach(&(PVOID&)func, (PBYTE)&thunk);
+            }
+        };
+
+
+        //
+
         typedef void(WINAPI* OriginalEquipObject)(  RE::ActorEquipManager* a_1, 
                                                     RE::Actor* a_actor,
                                                     RE::TESBoundObject* a_object, 
@@ -204,21 +255,8 @@ namespace DeviousDevices {
                 EquipShoutHook::Install();
             }
 
-            //const uintptr_t loc_equipTargetAddress = RE::Offset::ActorEquipManager::EquipObject.address();
-            //_EquipObject = (OriginalEquipObject)loc_equipTargetAddress;
-            //DetourTransactionBegin();
-            //DetourUpdateThread(GetCurrentThread());
-            //DetourAttach(&(PVOID&)_EquipObject, (PBYTE)&EquipObject);
-            //
-            //if (DetourTransactionCommit() == NO_ERROR)
-            //{
-            //    LOG("Installed papyrus hook on EquipObject at {0:x} with replacement from address {0:x}",
-            //                 loc_equipTargetAddress, (void*)&EquipObject);
-            //}
-            //else
-            //{
-            //    WARN("Failed to install papyrus hook on EquipObject");
-            //}
+            UpdateMovementSpeedHook::Install();
+            UpdateAutoMoveHook::Install();
 
             const uintptr_t loc_equip2TargetAddress = REL::VariantID(37974, 38929, 0x642E30).address();
             _EquipObject2 = (OriginalEquipObject2)loc_equip2TargetAddress;

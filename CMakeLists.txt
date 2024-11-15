@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 message("Using toolchain file ${CMAKE_TOOLCHAIN_FILE}.")
 
-#set(VCPKG_MANIFEST_INSTALL OFF)
-
 ########################################################################################################################
 ## Define project
 ########################################################################################################################
@@ -41,6 +39,7 @@ set(headers
         include/Serialization.h
         include/Export.h
         include/HooksVirtual.h
+        include/MovementManager.h
         include/API.h
 )
 
@@ -59,6 +58,7 @@ set(sources
         src/Serialization.cpp
         src/Export.cpp
         src/HooksVirtual.cpp
+        src/MovementManager.cpp
         src/API.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 

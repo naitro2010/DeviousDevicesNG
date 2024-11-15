@@ -10,9 +10,30 @@
         "plugin": {
             "description": "Build the SKSE plugin.",
             "dependencies": [
-              "commonlibsse-ng",
-              "detours",
-              "boost"
+                "commonlibsse-ng",
+                "detours",
+                "boost-algorithm",
+                "boost-math",
+                "boost-lexical-cast",
+                "boost-property-tree"
+            ],
+            "overrides": [
+                {
+                    "name": "boost-algorithm",
+                    "version-date": "2024-11-14"
+                },
+                {
+                    "name": "boost-math",
+                    "version-date": "2024-11-14"
+                },
+                {
+                    "name": "boost-lexical-cast",
+                    "version-date": "2024-11-14"
+                },
+                {
+                    "name": "boost-property-tree",
+                    "version-date": "2024-11-14"
+                }
             ]
         },
         "tests": {
