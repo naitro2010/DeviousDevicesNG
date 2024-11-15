@@ -26,7 +26,7 @@ void DeviousDevices::HooksVirtual::Setup()
 
 void DeviousDevices::HooksVirtual::ProcessButton(RE::MovementHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 {
-    LOG("ProcessButton called")
+    LOG("HooksVirtual::ProcessButton() called")
     ProcessButton_old(a_this,a_event,a_data);
 
     MovementManager::GetSingleton()->ManagePlayerInput(a_data);
@@ -34,7 +34,7 @@ void DeviousDevices::HooksVirtual::ProcessButton(RE::MovementHandler* a_this, RE
 
 void DeviousDevices::HooksVirtual::ProcessButtonAM(RE::AutoMoveHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 {
-    LOG("ProcessButtonAM called")
+    LOG("HooksVirtual::ProcessButton() called")
     ProcessButtonAM_old(a_this,a_event,a_data);
 
     MovementManager::GetSingleton()->ManagePlayerInput(a_data);
@@ -55,6 +55,7 @@ void DeviousDevices::HooksVirtual::ProcessThumbstick(RE::MovementHandler* a_this
 
 void DeviousDevices::HooksVirtual::DrawWeaponMagicHands(RE::PlayerCharacter* a_this, bool a_draw)
 {
+    LOG("HooksVirtual::DrawWeaponMagicHands() called")
     if (a_draw && MovementManager::GetSingleton()->ManageWeapons(a_this))
     {
         return;

@@ -1,8 +1,4 @@
 #include "MovementManager.h"
-#include "MovementManager.h"
-#include "MovementManager.h"
-#include "MovementManager.h"
-#include "MovementManager.h"
 #include "LibFunctions.h"
 
 SINGLETONBODY(DeviousDevices::MovementManager)
@@ -17,7 +13,7 @@ void DeviousDevices::MovementManager::Setup()
 
 void DeviousDevices::MovementManager::Update()
 {
-    //DEBUG("MovementManager::Update()")
+    LOG("MovementManager::Update() called")
 
     static auto loc_disablecombatkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asDisableCombatKeywords",false);
     
@@ -58,12 +54,10 @@ void DeviousDevices::MovementManager::ManageAutoMove(RE::PlayerControls* a_pc)
 
 void DeviousDevices::MovementManager::ManagePlayerInput(RE::PlayerControlsData* a_data)
 {
-    static const auto loc_self = GetSingleton();
-    static const float loc_maxspeed = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSpeedMult",0.15f);
-    
     static const auto loc_camera = RE::PlayerCamera::GetSingleton();
-    if (loc_self->_PlayerForceWalk && !loc_camera->IsInFreeCameraMode())
+    if (_PlayerForceWalk && (!loc_camera || !loc_camera->IsInFreeCameraMode()))
     {
+        static const float loc_maxspeed = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSpeedMult",0.15f);
         if (std::abs(a_data->moveInputVec.x) > loc_maxspeed) a_data->moveInputVec.x = a_data->moveInputVec.x > 0.0f ? loc_maxspeed : -1.0f*loc_maxspeed;
         if (std::abs(a_data->moveInputVec.y) > loc_maxspeed) a_data->moveInputVec.y = a_data->moveInputVec.y > 0.0f ? loc_maxspeed : -1.0f*loc_maxspeed;
     }
