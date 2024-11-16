@@ -1,8 +1,6 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
     "name": "commonlibsse-sample-plugin",
-    "version-string": "1.0.0",
-    "port-version": 0,
     "description": "Sample SKSE plugin based on CommonLibSSE, for unified AE/SE/VR deployment.",
     "homepage": "https://www.skyrimng.com",
     "license": "Apache-2.0",
@@ -16,24 +14,6 @@
                 "boost-math",
                 "boost-lexical-cast",
                 "boost-property-tree"
-            ],
-            "overrides": [
-                {
-                    "name": "boost-algorithm",
-                    "version-date": "2024-11-14"
-                },
-                {
-                    "name": "boost-math",
-                    "version-date": "2024-11-14"
-                },
-                {
-                    "name": "boost-lexical-cast",
-                    "version-date": "2024-11-14"
-                },
-                {
-                    "name": "boost-property-tree",
-                    "version-date": "2024-11-14"
-                }
             ]
         },
         "tests": {
@@ -50,6 +30,25 @@
             ]
         }
     },
+    "overrides": [
+        {
+            "name": "boost-algorithm",
+            "version-date": "2024-11-14"
+        },
+        {
+            "name": "boost-math",
+            "version-date": "2024-11-14"
+        },
+        {
+            "name": "boost-lexical-cast",
+            "version-date": "2024-11-14"
+        },
+        {
+            "name": "boost-property-tree",
+            "version-date": "2024-11-14"
+        }
+    ],
+    "builtin-baseline": "8cbab05e499a6fc3893c9a6125d51b6d7d877dcc",
     "default-features": [
         "plugin",
         "tests"
