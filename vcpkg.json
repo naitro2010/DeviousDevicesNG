@@ -33,19 +33,19 @@
     "overrides": [
         {
             "name": "boost-algorithm",
-            "version-date": "2024-11-14"
+            "version": "1.86.0"
         },
         {
             "name": "boost-math",
-            "version-date": "2024-11-14"
+            "version": "1.86.0"
         },
         {
             "name": "boost-lexical-cast",
-            "version-date": "2024-11-14"
+            "version": "1.86.0"
         },
         {
             "name": "boost-property-tree",
-            "version-date": "2024-11-14"
+            "version": "1.86.0"
         }
     ],
     "builtin-baseline": "8cbab05e499a6fc3893c9a6125d51b6d7d877dcc",
