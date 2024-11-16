@@ -74,7 +74,7 @@ Function SetDefaultSlotMasks()
     HideEquipment(32, 56) ; When slot 32 is equipped, hide slot 56 (Chastity Bra's).
     HideEquipment(32, 58) ; When slot 32 is equipped, hide slot 58 (Corsets).
     HideEquipment(32, 49) ; When slot 32 is equipped, hide slot 49 (Belts).
-    HideEquipment(49, 52) ; When slot 49 (belt) is equipped, hide slot 52 (SoS).
+    ;HideEquipment(49, 52) ; When slot 49 (belt) is equipped, hide slot 52 (SoS).
     
     SyncSetting()
 EndFunction
