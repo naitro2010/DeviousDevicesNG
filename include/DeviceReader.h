@@ -315,26 +315,26 @@ namespace DeviousDevices
     std::vector<std::string>    GetPropertyStringArray( PAPYRUSFUNCHANDLE,RE::TESObjectARMO* a_invdevice, std::string a_propertyname, int a_mode);
 
     // device manipulation
-    inline void SetDisableUnequip(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv, bool disable) {
+    static void SetDisableUnequip(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv, bool disable) {
         LOG("SetDisableUnequip called")
         DeviceReader::GetSingleton()->SetDisableUnequip(actor, inv, disable);
         if (RE::TESObjectARMO* loc_res = DeviceReader::GetSingleton()->GetDeviceRender(inv)) {
             DeviceReader::GetSingleton()->SetDisableUnequip(actor, loc_res, disable);
         }
     }
-    inline bool GetDisableUnequip(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv) {
+    static bool GetDisableUnequip(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv) {
         LOG("GetDisableUnequip called")
         return DeviceReader::GetSingleton()->GetDisableUnequip(actor, inv);
     }
     
 
     // device manipulation
-    inline void SetManipulated(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv, bool manip) 
+    static void SetManipulated(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv, bool manip) 
     {
         LOG("SetManipulated called")
         DeviceReader::GetSingleton()->SetManipulated(actor, inv, manip);
     }
-    inline bool GetManipulated(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv) 
+    static bool GetManipulated(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv) 
     {
         LOG("GetManipulated called")
         return DeviceReader::GetSingleton()->GetManipulated(actor, inv);
