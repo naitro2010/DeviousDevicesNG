@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DeviceReader.h"
+#include "HooksVirtual.h"
 #include "InventoryFilter.h"
 #include <detours/detours.h>
 #include "Script.hpp"
@@ -217,13 +218,19 @@ namespace DeviousDevices {
             // need to check for quest item
             if (DeviceReader::GetSingleton() && actor && item && item->formType == RE::FormType::Armor &&
                 item->As<RE::TESObjectARMO>()) {
-                if (DeviceReader::GetSingleton()->GetDisableUnequip(actor, item->As<RE::TESObjectARMO>()) == false) {
+                if (DeviceReader::GetSingleton()->GetDisableUnequip(actor, item->As<RE::TESObjectARMO>()) == false ||
+                    (RE::UI::GetSingleton() &&
+                     DeviousDevices::HooksVirtual::GetSingleton() && RE::UI::GetSingleton()->IsMenuOpen("InventoryMenu") &&
+                     DeviousDevices::HooksVirtual::GetSingleton()->GetNormalUnequipMode())) {
+                    DEBUG("Unequip allowed or user requested unequip")
                     return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
                                           a_playSounds, a_applyNow, a_slotToReplace);
                 } else {
+                    DEBUG("Unequip prevented")
                     return false;
                 }
             } else {
+                DEBUG("Unequip ignored and allowed")
                 return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
                                       a_playSounds, a_applyNow, a_slotToReplace);
             }
