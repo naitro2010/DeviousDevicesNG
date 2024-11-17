@@ -1,8 +1,6 @@
 {
-    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
+    "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
     "name": "commonlibsse-sample-plugin",
-    "version-string": "1.0.0",
-    "port-version": 0,
     "description": "Sample SKSE plugin based on CommonLibSSE, for unified AE/SE/VR deployment.",
     "homepage": "https://www.skyrimng.com",
     "license": "Apache-2.0",
@@ -10,9 +8,12 @@
         "plugin": {
             "description": "Build the SKSE plugin.",
             "dependencies": [
-              "commonlibsse-ng",
-              "detours",
-              "boost"
+                "commonlibsse-ng",
+                "detours",
+                "boost-algorithm",
+                "boost-math",
+                "boost-lexical-cast",
+                "boost-property-tree"
             ]
         },
         "tests": {
@@ -29,6 +30,25 @@
             ]
         }
     },
+    "overrides": [
+        {
+            "name": "boost-algorithm",
+            "version": "1.86.0"
+        },
+        {
+            "name": "boost-math",
+            "version": "1.86.0"
+        },
+        {
+            "name": "boost-lexical-cast",
+            "version": "1.86.0"
+        },
+        {
+            "name": "boost-property-tree",
+            "version": "1.86.0"
+        }
+    ],
+    "builtin-baseline": "8cbab05e499a6fc3893c9a6125d51b6d7d877dcc",
     "default-features": [
         "plugin",
         "tests"
