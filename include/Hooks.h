@@ -214,10 +214,19 @@ namespace DeviousDevices {
 
             // cases: remove all items, external mod calling unequip, user trying through inventory
 
-            // need to check for quest item 
-
-            return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
-                                  a_playSounds, a_applyNow, a_slotToReplace);
+            // need to check for quest item
+            if (DeviceReader::GetSingleton() && actor && item && item->formType == RE::FormType::Armor &&
+                item->As<RE::TESObjectARMO>()) {
+                if (DeviceReader::GetSingleton()->GetDisableUnequip(actor, item->As<RE::TESObjectARMO>()) == false) {
+                    return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
+                                          a_playSounds, a_applyNow, a_slotToReplace);
+                } else {
+                    return false;
+                }
+            } else {
+                return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
+                                      a_playSounds, a_applyNow, a_slotToReplace);
+            }
         }
 
         // Some mods or game itself calls this method sometimes directly (mainly for NPCs). 
