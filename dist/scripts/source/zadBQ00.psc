@@ -1247,319 +1247,382 @@ function Logic(int threadID, bool HasPlayer)
 		SkipFilter = False
 		return
 	EndIf
-	int i
+	int i = 0
 	sslThreadController Controller = Sexlab.ThreadSlots.GetController(threadID)
 	actor[] originalActors = Controller.Positions
 	sslBaseAnimation previousAnim = Controller.Animation
-	if previousAnim.HasTag("Oral")
-		TogglePanelGag(originalActors, false)
-	EndIf
 	
-	;If !libs.config.useAnimFilter || previousAnim.HasTag("NoSwap") || previousAnim.HasTag("DeviousDevice") || previousAnim.HasTag("Estrus") ; Estrus Chaurus compatibility
-	If previousAnim.HasTag("NoSwap") || previousAnim.HasTag("DeviousDevice") || previousAnim.HasTag("Estrus") || (!libs.config.useAnimFilterCreatures && previousAnim.HasTag("Creature"))
-		libs.Log("Animation should not be replaced. Done.")
-		Return
-	EndIf	
 	
-	Bool AllowRemoveBindings = True ; can temporarily remove devices. There are no bound anims for creatures or for threesomes etc.
-	
-	if AllowRemoveBindings
-		StoreUnblockedPlugs(originalActors)
-	Endif
-	
-	bool permitOral = True
-	bool permitVaginal = True
-	bool permitAnal = True
-	bool permitBoobs = True
-	int NumExtraTags = 0
-	string[] ExtraTags = new String[12]
-	bool UsingHeavyBondage = False
-	bool HasBoundActors = False
-	i = originalActors.Length
-	While i > 0
-		i -= 1
-		PermitAnal = PermitAnal && !IsBlockedAnal(originalActors[i])
-		PermitVaginal = PermitVaginal && !IsBlockedVaginal(originalActors[i])
-		PermitBoobs = PermitBoobs && !IsBlockedBreast(originalActors[i])
-		PermitOral = PermitOral && !IsBlockedOral(originalActors[i])
-		UsingHeavyBondage = UsingHeavyBondage || ( ( HasHeavyBondage(originalActors[i]) && !HasStraitJacket(originalActors[i]) ) )
-		HasBoundActors = HasBoundActors || libs.NeedsBoundAnim(originalActors[i])
-	EndWhile
-	Bool NoBindings = !UsingHeavyBondage 
-	Bool IsCreatureAnim = previousAnim.HasTag("Creature")
-	
-	libs.Log("PermitAnal " + PermitAnal)
-	libs.Log("PermitVaginal " + PermitVaginal)
-	libs.Log("PermitBoobs " + PermitBoobs)
-	libs.Log("PermitOral " + PermitOral)
-	libs.Log("NoBindings " + NoBindings)
-	libs.Log("IsCreatureAnim " + IsCreatureAnim)
-	libs.Log("HasBoundActors " + HasBoundActors)	
-		
-	; If no actor was restrained in any way we can detect, then don't change the animation.
-	If PermitAnal && PermitVaginal && PermitOral && PermitBoobs && NoBindings
-		libs.Log("No sex-act-restricted actors present in this sex scene.")		
-		Return
-	EndIf
-	
-	if IsValidAnimation(previousAnim, PermitOral, PermitVaginal, PermitAnal, permitBoobs, HasBoundActors)
-		libs.Log("Original animation (" + previousAnim.name + ") does not conflict. Done.")
-		return
-	EndIf
-	NumExtraTags = 0 ; Reset.
-	
-	if !NoBindings && !libs.config.useBoundAnims ; Actor is bound, config specifies to not use bound anims.
-		libs.Log("One or more actors were bound, but bound animations are disabled in MCM. Removing bindings.")
-		;StoreHeavyBondage(originalActors)
-		UsingHeavyBondage = False
-		NoBindings = True
-		HasBoundActors = False
-	EndIf	
-	
-	; handle creatures as far as possible.
-	if IsCreatureAnim		
-		Bool isInvalidAnim = False		
-		; we ignore minor incompatibilities, but belts and gags are a potential dealbreaker.
-		If !PermitVaginal && previousAnim.HasTag("Vaginal")		
-			isInvalidAnim = True			
-		Endif
-		if !PermitOral && previousAnim.HasTag("Oral")					
-			isInvalidAnim = True
-		Endif
-		if !PermitAnal && previousAnim.HasTag("Anal")
-			isInvalidAnim = True
-		Endif		
-		; Actors are bound, but animation is otherwise ok - remove bindings and proceed
-		if !NoBindings && !isInvalidAnim
-			if AllowRemoveBindings		
-				libs.Log("Animation involves creatures but is otherwise valid. Removing bindings.")
-				;StoreHeavyBondage(originalActors)				
-				NoBindings = True			
-				HasBoundActors = False
-				return			
-			Endif
-		Endif
-		; Actors are bound, and animation needs replaced - remove bindings and continue filtering
-		if !NoBindings && isInvalidAnim
-			if AllowRemoveBindings		
-				libs.Log("Animation involves creatures and needs replacement. Removing bindings.")
-				;StoreHeavyBondage(originalActors)
-				UsingHeavyBondage = False
-				NoBindings = True
-				HasBoundActors = False				
-			Endif
-		Endif		
-	EndIf
-	
-	actor[] actors
-	actor[] solos
-	int actorIter = 0
-	int currentActorCount = originalActors.length
-	
-	; Let's try and see if we can get valid animations right here
-	sslBaseAnimation[] anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-	
-	if anims.length <= 0	
-		; we didn't get a valid animation. Let's check if that's because of our limited selection of bound anims.
-		if !AllowRemoveBindings
-			; just the most basic fallBack.
-			if originalActors.length == 2 && !AnimHasNoProblematicDevices(Controller)
-				libs.Log("No bound animation for this setup. Hiding problematic restraints.")
-				;StoreHeavyBondage(originalActors)
-				UsingHeavyBondage = False
-				NoBindings = True
-				HasBoundActors = False
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)			
-			Endif
-		else
-			; try more comprehensive fallbacks
-			if !NoBindings
-				libs.Log("No bound animation for this setup. Hiding restraints.")
-				;StoreHeavyBondage(originalActors)
-				UsingHeavyBondage = False
-				NoBindings = True
-				HasBoundActors = False
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-			EndIf
-			if anims.length <= 0 && !permitVaginal
-				; if it STILL doesn't work, we hide belts and plugs, too.
-				libs.Log("No bound animation found. Hiding chastity and plugs.")
-				StoreBelts(originalActors)
-				StorePlugs(originalActors)
-				permitVaginal = True
-				permitAnal = True
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-			EndIf
-			if anims.length <= 0 && !permitOral
-				; try removing the gag
-				libs.Log("No bound animation found. Hiding gags.")
-				StoreGags(originalActors)								
-				permitOral = True
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-			EndIf
-		EndIf
-	EndIf
-	
-	if !AllowRemoveBindings && anims.length <= 0	
-		; this was already attempted if the AllowRemoveBindings setting is enabled. I will leave this code in there for now, in case the new behavior isn't liked by players.
-		if originalActors.length > 3 ; 4 and 5-actor animations are a huge edge case. There are not many available and chances for the filter to find a working animation when actors are restrained or wearing chastity are close to zero. Let's just hide restraints and/or chastity and try again.
-			if !NoBindings
-				libs.Log("Animation features more than 3 actors. Hiding restraints.")
-				;StoreHeavyBondage(originalActors)
-				UsingHeavyBondage = False
-				NoBindings = True
-				HasBoundActors = False
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-			EndIf
-			if anims.length <= 0 && !permitVaginal
-				; if it STILL doesn't work, we hide belts, too. We also just ignore plugs.
-				libs.Log("Animation features more than 3 actors. Hiding chastity and plugs.")
-				StoreBelts(originalActors)
-				StorePlugs(originalActors)
-				permitVaginal = True
-				permitAnal = True
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-			EndIf
-			if anims.length <= 0 && !permitOral
-				; try removing the gag
-				libs.Log("Animation features more than 3 actors. Hiding gags.")
-				StoreGags(originalActors)								
-				permitOral = True
-				anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-			EndIf
-			if anims.length <= 0
-				; This is STILL not working. Let's abort before more stuff breaks.
-				libs.log("Error: Animation features more than 3 actors. Failed to find any valid animations after fallbacks. Aborting.")
-				Controller.EndAnimation(quickly=true)
-				return
-			EndIf
-		EndIf
-	EndIf
-	
-	if !AllowRemoveBindings && !previousAnim.HasTag("Creature") && anims.length <= 0
-		; we didn't get a valid animation. Let's move the belted actors to solos.
-		while actorIter < currentActorCount
-			if originalActors[actorIter].WornHasKeyword(libs.zad_DeviousBelt) && actorIter != 0
-				; Can't have a belted actor pitching. Move to solo.
-				libs.Log("Moving belted actor " + originalActors[actorIter].GetLeveledActorBase().GetName() + " to solos")
-				solos = sslUtility.PushActor(originalActors[actorIter], solos)
-			Else
-				actors = sslUtility.PushActor(originalActors[actorIter], actors)
-			Endif
-			actorIter += 1
-		EndWhile
-		if actors.length == 1
-			; Slot 0 is (almost) always the female role. Just need to rearrange actors, I think?
-			if solos.length > 0
-				libs.Log("Moved too many actors to Solos. Rearranging actors list.")
-				actor[] tmp
-				tmp = sslUtility.PushActor(solos[0], tmp)
-				solos[0] = none
-				tmp = sslUtility.Pushactor(actors[0], tmp)
-				actors = tmp
-			EndIf
-		Endif
-		libs.Log("Total actors: " + originalActors.length + ". Participating Actors: " + actors.length + ". Animation: " + previousAnim.name)		
-		anims = SelectValidAnimations(Controller, actors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
-	EndIf
-			
-	if anims.length <= 0
-		libs.Log("Still no animations available! Trying last resort fallbacks...")
-	EndIf
-	
-	Bool NeedsRebuild = False
-	int workaroundID = 0
-	int numWorkarounds = 2
-	actor[] actorsBak = actors
-	if !previousAnim.HasTag("Creature")
-		; This implementation is a workaround for papyrus not properly supporting pass-by-reference arrays.
-		while anims.length <= 0 && workaroundID < numWorkarounds
-			actors = actorsBak
-			if workaroundID == 0 && actors.length >=3
-				; Try removing actors, and shuffling them to solo scenes.
-				libs.Log("Trying to resize actors...")
-			EndIf
-			 if workaroundID == 1 && !NoBindings ; No anims, while bound.
-				;Still no animations after resizing actors. Drop bindings, and try again.
-				libs.Log("Removing heavy restraints, Trying to resize actors...")
-				;StoreHeavyBondage(originalActors)			
-				;UsingArmbinder = False
-				;UsingYoke = False
-				UsingHeavyBondage = False
-				HasBoundActors = False
-				NoBindings = True
-				HasBoundActors = False			
-				anims = SelectValidAnimations(Controller, actors.length, previousAnim, false, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)			
-			 EndIf
-			if anims.length <= 0 ; No flow-control keywords like continue/break...
-				i = actors.length
-				while i >= 2 && anims.length==0				
-					i -= 1
-					libs.Log("Reduced number of actors to " + i)								
-					anims = SelectValidAnimations(Controller, i, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)				
-				EndWhile
-				if anims.length >=1
-					libs.Log("Found valid animation. Rebuilding actor lists.")
-					actor[] tmp
-					int j = 0
-					while j < actors.length
-						if j < i
-							tmp = sslUtility.PushActor(actors[j], tmp)
-						Else
-							solos = sslUtility.PushActor(actors[j], solos)
-						Endif
-						j += 1
-					EndWhile
-					actors = tmp
-				EndIf
-			EndIf
-			workaroundID += 1
-		EndWhile
-	EndIf
+	if !libs.config.useBoundAnims ;Ponzi's logic from PAR
+		bool oral = previousAnim.HasTag("Oral")
+		bool vaginal = previousAnim.HasTag("Vaginal")
+		bool anal = previousAnim.HasTag("Anal")
 
-	if anims.length <= 0
-		; Failure...clean up animation and pretend it didn't happen... :(
-		libs.log("Error: Failed to find any valid animations. Aborting.")
-		Controller.EndAnimation(quickly=true)
-		return		
-    Endif
-	
-	libs.Log("Overriding animations.")
-	Controller.SetForcedAnimations(anims)
-	; see if we need to rebuild the actor arrays
-	if (actors.Length > 0 && actors.Length != originalActors.Length) || solos.Length >= 1
-		libs.Log("Requesting actor change to " + actors.Length + " actors.")
-		i = 0
-		while i < actors.Length
-			libs.Log("Actor ["+i+"]: "+actors[i].GetLeveledActorBase().GetName())
-			i += 1
-		EndWhile
-		i = 0
-		while i < solos.Length
-			libs.Log("Solo ["+i+"]: "+solos[i].GetLeveledActorBase().GetName())
-			i += 1
-		EndWhile	
-		Controller.ChangeActors(actors)
-	EndIf
-	; sort actors into the proper positions, in other words: the bound actor gets fucked
-	If !libs.NeedsBoundAnim(originalActors[0])
-		Actor tmp = originalActors[0]
-		originalActors[0] = originalActors[1]
-		originalActors[1] = tmp
-		Controller.ChangeActors(originalActors)
-	EndIf
-	Wait_Animating_State(Controller)
-	Controller.SetAnimation()
+		libs.Log("Sex Logic: oral = " + oral + " - vaginal = " + vaginal + " anal = " + anal)
 		
-	If solos.Length > 0
-		Faction animatingFaction = SexLab.ActorLib.AnimatingFaction
-		i = solos.Length
+		while i < originalActors.length
+			if oral
+				Armor gag = libs.GetWornRenderedDeviceByKeyword(originalActors[i], libs.zad_DeviousGag)
+
+				if gag && !gag.HasKeyword(libs.zad_PermitOral)
+					libs.Log("Sex Logic - Found gag " + gag + " on " + originalActors[i])
+					if gag.HasKeyword(libs.zad_DeviousGagPanel)
+						libs.Log("Sex Logic - Unplugging " + gag + " on " + originalActors[i])
+						libs.UnPlugPanelGag(originalActors[i])
+					else
+						StorageUtil.SetFormValue(originalActors[i], "zadstoredGag", gag)
+						libs.Log("Sex Logic - Unequipping " + gag + " on " + originalActors[i])
+						originalActors[i].UnequipItem(gag, false, true)
+					endIf
+				endIf
+			endif
+
+			if vaginal || anal
+				Armor belt = libs.GetWornRenderedDeviceByKeyword(originalActors[i], libs.zad_DeviousBelt)
+				libs.Log("Sex Logic - Found belt " + belt + " on " + originalActors[i])
+				if belt && (vaginal || (anal && !belt.HasKeyword(libs.zad_PermitAnal)))
+					libs.Log("Sex Logic - Unequipping " + belt + " on " + originalActors[i])
+					StorageUtil.SetFormValue(originalActors[i], "zadstoredBelt", belt)
+					originalActors[i].UnequipItem(belt, false, true)
+				endIf
+			endIf
+
+			if vaginal
+				Armor vplug = libs.GetWornRenderedDeviceByKeyword(originalActors[i], libs.zad_DeviousPlugVaginal)
+				libs.Log("Sex Logic - Found vplug " + vplug + " on " + originalActors[i])
+				if vplug
+					libs.Log("Sex Logic - Unequipping " + vplug + " on " + originalActors[i])
+					StorageUtil.SetFormValue(originalActors[i], "zadstoredPlugV", vplug)
+					originalActors[i].UnequipItem(vplug, false, true)
+				endIf
+			endIf
+
+			if anal
+				Armor aplug = libs.GetWornRenderedDeviceByKeyword(originalActors[i], libs.zad_DeviousPlugAnal)
+				libs.Log("Sex Logic - Found aplug" + aplug + " on " + originalActors[i])
+				if aplug
+					libs.Log("Sex Logic - Unequipping " + aplug + " on " + originalActors[i])
+					StorageUtil.SetFormValue(originalActors[i], "zadstoredPlugA", aplug)
+					originalActors[i].UnequipItem(aplug, false, true)
+				endIf
+			endIf
+
+			i += 1
+		endWhile
+
+		return
+
+	else ;legacy filter logic
+		if previousAnim.HasTag("Oral")
+			TogglePanelGag(originalActors, false)
+		EndIf
+		
+		;If !libs.config.useAnimFilter || previousAnim.HasTag("NoSwap") || previousAnim.HasTag("DeviousDevice") || previousAnim.HasTag("Estrus") ; Estrus Chaurus compatibility
+		If previousAnim.HasTag("NoSwap") || previousAnim.HasTag("DeviousDevice") || previousAnim.HasTag("Estrus") || (!libs.config.useAnimFilterCreatures && previousAnim.HasTag("Creature"))
+			libs.Log("Animation should not be replaced. Done.")
+			Return
+		EndIf	
+		
+		Bool AllowRemoveBindings = True ; can temporarily remove devices. There are no bound anims for creatures or for threesomes etc.
+		
+		if AllowRemoveBindings
+			StoreUnblockedPlugs(originalActors)
+		Endif
+		
+		bool permitOral = True
+		bool permitVaginal = True
+		bool permitAnal = True
+		bool permitBoobs = True
+		int NumExtraTags = 0
+		string[] ExtraTags = new String[12]
+		bool UsingHeavyBondage = False
+		bool HasBoundActors = False
+		i = originalActors.Length
 		While i > 0
 			i -= 1
-			solos[i].RemoveFromFaction(animatingFaction)
+			PermitAnal = PermitAnal && !IsBlockedAnal(originalActors[i])
+			PermitVaginal = PermitVaginal && !IsBlockedVaginal(originalActors[i])
+			PermitBoobs = PermitBoobs && !IsBlockedBreast(originalActors[i])
+			PermitOral = PermitOral && !IsBlockedOral(originalActors[i])
+			UsingHeavyBondage = UsingHeavyBondage || ( ( HasHeavyBondage(originalActors[i]) && !HasStraitJacket(originalActors[i]) ) )
+			HasBoundActors = HasBoundActors || libs.NeedsBoundAnim(originalActors[i])
 		EndWhile
-		ProcessSolos(solos)
-	EndIf
+		Bool NoBindings = !UsingHeavyBondage 
+		Bool IsCreatureAnim = previousAnim.HasTag("Creature")
+		
+		libs.Log("PermitAnal " + PermitAnal)
+		libs.Log("PermitVaginal " + PermitVaginal)
+		libs.Log("PermitBoobs " + PermitBoobs)
+		libs.Log("PermitOral " + PermitOral)
+		libs.Log("NoBindings " + NoBindings)
+		libs.Log("IsCreatureAnim " + IsCreatureAnim)
+		libs.Log("HasBoundActors " + HasBoundActors)	
+			
+		; If no actor was restrained in any way we can detect, then don't change the animation.
+		If PermitAnal && PermitVaginal && PermitOral && PermitBoobs && NoBindings
+			libs.Log("No sex-act-restricted actors present in this sex scene.")		
+			Return
+		EndIf
+		
+		if IsValidAnimation(previousAnim, PermitOral, PermitVaginal, PermitAnal, permitBoobs, HasBoundActors)
+			libs.Log("Original animation (" + previousAnim.name + ") does not conflict. Done.")
+			return
+		EndIf
+		NumExtraTags = 0 ; Reset.
+		
+		if !NoBindings && !libs.config.useBoundAnims ; Actor is bound, config specifies to not use bound anims.
+			libs.Log("One or more actors were bound, but bound animations are disabled in MCM. Removing bindings.")
+			;StoreHeavyBondage(originalActors)
+			UsingHeavyBondage = False
+			NoBindings = True
+			HasBoundActors = False
+		EndIf	
+		
+		; handle creatures as far as possible.
+		if IsCreatureAnim		
+			Bool isInvalidAnim = False		
+			; we ignore minor incompatibilities, but belts and gags are a potential dealbreaker.
+			If !PermitVaginal && previousAnim.HasTag("Vaginal")		
+				isInvalidAnim = True			
+			Endif
+			if !PermitOral && previousAnim.HasTag("Oral")					
+				isInvalidAnim = True
+			Endif
+			if !PermitAnal && previousAnim.HasTag("Anal")
+				isInvalidAnim = True
+			Endif		
+			; Actors are bound, but animation is otherwise ok - remove bindings and proceed
+			if !NoBindings && !isInvalidAnim
+				if AllowRemoveBindings		
+					libs.Log("Animation involves creatures but is otherwise valid. Removing bindings.")
+					;StoreHeavyBondage(originalActors)				
+					NoBindings = True			
+					HasBoundActors = False
+					return			
+				Endif
+			Endif
+			; Actors are bound, and animation needs replaced - remove bindings and continue filtering
+			if !NoBindings && isInvalidAnim
+				if AllowRemoveBindings		
+					libs.Log("Animation involves creatures and needs replacement. Removing bindings.")
+					;StoreHeavyBondage(originalActors)
+					UsingHeavyBondage = False
+					NoBindings = True
+					HasBoundActors = False				
+				Endif
+			Endif		
+		EndIf
+		
+		actor[] actors
+		actor[] solos
+		int actorIter = 0
+		int currentActorCount = originalActors.length
+		
+		; Let's try and see if we can get valid animations right here
+		sslBaseAnimation[] anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+		
+		if anims.length <= 0	
+			; we didn't get a valid animation. Let's check if that's because of our limited selection of bound anims.
+			if !AllowRemoveBindings
+				; just the most basic fallBack.
+				if originalActors.length == 2 && !AnimHasNoProblematicDevices(Controller)
+					libs.Log("No bound animation for this setup. Hiding problematic restraints.")
+					;StoreHeavyBondage(originalActors)
+					UsingHeavyBondage = False
+					NoBindings = True
+					HasBoundActors = False
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)			
+				Endif
+			else
+				; try more comprehensive fallbacks
+				if !NoBindings
+					libs.Log("No bound animation for this setup. Hiding restraints.")
+					;StoreHeavyBondage(originalActors)
+					UsingHeavyBondage = False
+					NoBindings = True
+					HasBoundActors = False
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				EndIf
+				if anims.length <= 0 && !permitVaginal
+					; if it STILL doesn't work, we hide belts and plugs, too.
+					libs.Log("No bound animation found. Hiding chastity and plugs.")
+					StoreBelts(originalActors)
+					StorePlugs(originalActors)
+					permitVaginal = True
+					permitAnal = True
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				EndIf
+				if anims.length <= 0 && !permitOral
+					; try removing the gag
+					libs.Log("No bound animation found. Hiding gags.")
+					StoreGags(originalActors)								
+					permitOral = True
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				EndIf
+			EndIf
+		EndIf
+		
+		if !AllowRemoveBindings && anims.length <= 0	
+			; this was already attempted if the AllowRemoveBindings setting is enabled. I will leave this code in there for now, in case the new behavior isn't liked by players.
+			if originalActors.length > 3 ; 4 and 5-actor animations are a huge edge case. There are not many available and chances for the filter to find a working animation when actors are restrained or wearing chastity are close to zero. Let's just hide restraints and/or chastity and try again.
+				if !NoBindings
+					libs.Log("Animation features more than 3 actors. Hiding restraints.")
+					;StoreHeavyBondage(originalActors)
+					UsingHeavyBondage = False
+					NoBindings = True
+					HasBoundActors = False
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				EndIf
+				if anims.length <= 0 && !permitVaginal
+					; if it STILL doesn't work, we hide belts, too. We also just ignore plugs.
+					libs.Log("Animation features more than 3 actors. Hiding chastity and plugs.")
+					StoreBelts(originalActors)
+					StorePlugs(originalActors)
+					permitVaginal = True
+					permitAnal = True
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				EndIf
+				if anims.length <= 0 && !permitOral
+					; try removing the gag
+					libs.Log("Animation features more than 3 actors. Hiding gags.")
+					StoreGags(originalActors)								
+					permitOral = True
+					anims = SelectValidAnimations(Controller, originalActors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+				EndIf
+				if anims.length <= 0
+					; This is STILL not working. Let's abort before more stuff breaks.
+					libs.log("Error: Animation features more than 3 actors. Failed to find any valid animations after fallbacks. Aborting.")
+					Controller.EndAnimation(quickly=true)
+					return
+				EndIf
+			EndIf
+		EndIf
+		
+		if !AllowRemoveBindings && !previousAnim.HasTag("Creature") && anims.length <= 0
+			; we didn't get a valid animation. Let's move the belted actors to solos.
+			while actorIter < currentActorCount
+				if originalActors[actorIter].WornHasKeyword(libs.zad_DeviousBelt) && actorIter != 0
+					; Can't have a belted actor pitching. Move to solo.
+					libs.Log("Moving belted actor " + originalActors[actorIter].GetLeveledActorBase().GetName() + " to solos")
+					solos = sslUtility.PushActor(originalActors[actorIter], solos)
+				Else
+					actors = sslUtility.PushActor(originalActors[actorIter], actors)
+				Endif
+				actorIter += 1
+			EndWhile
+			if actors.length == 1
+				; Slot 0 is (almost) always the female role. Just need to rearrange actors, I think?
+				if solos.length > 0
+					libs.Log("Moved too many actors to Solos. Rearranging actors list.")
+					actor[] tmp
+					tmp = sslUtility.PushActor(solos[0], tmp)
+					solos[0] = none
+					tmp = sslUtility.Pushactor(actors[0], tmp)
+					actors = tmp
+				EndIf
+			Endif
+			libs.Log("Total actors: " + originalActors.length + ". Participating Actors: " + actors.length + ". Animation: " + previousAnim.name)		
+			anims = SelectValidAnimations(Controller, actors.length, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)
+		EndIf
+				
+		if anims.length <= 0
+			libs.Log("Still no animations available! Trying last resort fallbacks...")
+		EndIf
+		
+		Bool NeedsRebuild = False
+		int workaroundID = 0
+		int numWorkarounds = 2
+		actor[] actorsBak = actors
+		if !previousAnim.HasTag("Creature")
+			; This implementation is a workaround for papyrus not properly supporting pass-by-reference arrays.
+			while anims.length <= 0 && workaroundID < numWorkarounds
+				actors = actorsBak
+				if workaroundID == 0 && actors.length >=3
+					; Try removing actors, and shuffling them to solo scenes.
+					libs.Log("Trying to resize actors...")
+				EndIf
+				 if workaroundID == 1 && !NoBindings ; No anims, while bound.
+					;Still no animations after resizing actors. Drop bindings, and try again.
+					libs.Log("Removing heavy restraints, Trying to resize actors...")
+					;StoreHeavyBondage(originalActors)			
+					;UsingArmbinder = False
+					;UsingYoke = False
+					UsingHeavyBondage = False
+					HasBoundActors = False
+					NoBindings = True
+					HasBoundActors = False			
+					anims = SelectValidAnimations(Controller, actors.length, previousAnim, false, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)			
+				 EndIf
+				if anims.length <= 0 ; No flow-control keywords like continue/break...
+					i = actors.length
+					while i >= 2 && anims.length==0				
+						i -= 1
+						libs.Log("Reduced number of actors to " + i)								
+						anims = SelectValidAnimations(Controller, i, previousAnim, HasBoundActors, false, PermitOral, PermitVaginal, PermitAnal, permitBoobs)				
+					EndWhile
+					if anims.length >=1
+						libs.Log("Found valid animation. Rebuilding actor lists.")
+						actor[] tmp
+						int j = 0
+						while j < actors.length
+							if j < i
+								tmp = sslUtility.PushActor(actors[j], tmp)
+							Else
+								solos = sslUtility.PushActor(actors[j], solos)
+							Endif
+							j += 1
+						EndWhile
+						actors = tmp
+					EndIf
+				EndIf
+				workaroundID += 1
+			EndWhile
+		EndIf
+
+		if anims.length <= 0
+			; Failure...clean up animation and pretend it didn't happen... :(
+			libs.log("Error: Failed to find any valid animations. Aborting.")
+			Controller.EndAnimation(quickly=true)
+			return		
+		Endif
+		
+		libs.Log("Overriding animations.")
+		Controller.SetForcedAnimations(anims)
+		; see if we need to rebuild the actor arrays
+		if (actors.Length > 0 && actors.Length != originalActors.Length) || solos.Length >= 1
+			libs.Log("Requesting actor change to " + actors.Length + " actors.")
+			i = 0
+			while i < actors.Length
+				libs.Log("Actor ["+i+"]: "+actors[i].GetLeveledActorBase().GetName())
+				i += 1
+			EndWhile
+			i = 0
+			while i < solos.Length
+				libs.Log("Solo ["+i+"]: "+solos[i].GetLeveledActorBase().GetName())
+				i += 1
+			EndWhile	
+			Controller.ChangeActors(actors)
+		EndIf
+		; sort actors into the proper positions, in other words: the bound actor gets fucked
+		If !libs.NeedsBoundAnim(originalActors[0])
+			Actor tmp = originalActors[0]
+			originalActors[0] = originalActors[1]
+			originalActors[1] = tmp
+			Controller.ChangeActors(originalActors)
+		EndIf
+		Wait_Animating_State(Controller)
+		Controller.SetAnimation()
+			
+		If solos.Length > 0
+			Faction animatingFaction = SexLab.ActorLib.AnimatingFaction
+			i = solos.Length
+			While i > 0
+				i -= 1
+				solos[i].RemoveFromFaction(animatingFaction)
+			EndWhile
+			ProcessSolos(solos)
+		EndIf
+	endif	
 EndFunction
 
 
@@ -1688,20 +1751,24 @@ EndFunction
 
 
 Event OnAnimationStart(int threadID, bool HasPlayer)
-    libs.Log("OnAnimationStart()")
+	libs.Log("OnAnimationStart()")
     Logic(threadID, hasPlayer)
 EndEvent
 
 
 Event OnLeadInEnd(int threadID, bool HasPlayer)
+if libs.config.useBoundAnims ;so DD doesn't mess with this if the user wants to change the animation and has the filters turned off
     libs.Log("OnLeadInEnd()")
     Logic(threadID, hasPlayer)
+endif
 EndEvent
 
 
 Event OnAnimationChange(int threadID, bool HasPlayer)
+if libs.config.useBoundAnims ;so DD doesn't mess with this if the user wants to change the animation and has the filters turned off
     libs.Log("OnAnimationChange()")
     Logic(threadID, hasPlayer)
+endif
 EndEvent
 
 
