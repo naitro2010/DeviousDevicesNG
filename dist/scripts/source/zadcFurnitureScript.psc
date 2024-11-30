@@ -939,7 +939,7 @@ Bool Function SexScene(Actor Partner, String AnimationName = "")
 		SceneSexActors[1] = Partner	
 		RegisterForModEvent("HookAnimationEnd_DDCEnd", "OnDDCSLEnd")    
 		ActorUtil.RemovePackageOverride(User, CurrentPose)	; otherwise the anims go awry - krzp	
-		If libs.SexLab.GetStringVer() == "2.0 P+" 
+		If SKSE.GetPluginVersion("SexLabUtil") >= 34340864
 			Debug.SendAnimationEvent(User, "IdleForceDefaultState")	; sneaky v2 p+ compatibility to make sure animations start from a default idle, otherwise the first stage on the actor in a contraption didn't play in my tests
 		endif
 		libs.SexLab.StartSex(Positions = SceneSexActors, anims = Sanims, centeron = User, allowbed = false, hook = "DDCEnd")
