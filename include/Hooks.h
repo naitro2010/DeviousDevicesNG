@@ -326,17 +326,17 @@ namespace DeviousDevices {
             UpdateAutoMoveHook::Install();
             {
                 const uintptr_t loc_equipTargetAddress = RE::Offset::ActorEquipManager::EquipObject.address();
-                _UnequipObject = (OriginalUnequipObject)loc_equipTargetAddress;
+                _EquipObject = (OriginalEquipObject)loc_equipTargetAddress;
 
                 DetourTransactionBegin();
                 DetourUpdateThread(GetCurrentThread());
                 DetourAttach(&(PVOID&)_EquipObject, (PBYTE)&EquipObject);
 
                 if (DetourTransactionCommit() == NO_ERROR) {
-                    LOG("Installed papyrus hook on UnequipObject at {0:x} with replacement from address {0:x}",
+                    LOG("Installed papyrus hook on EquipObject at {0:x} with replacement from address {0:x}",
                         loc_equipTargetAddress, (void*)&EquipObject);
                 } else {
-                    WARN("Failed to install papyrus hook on UnequipObject");
+                    WARN("Failed to install papyrus hook on EquipObject");
                 }
             }
             const uintptr_t loc_equip2TargetAddress = REL::VariantID(37974, 38929, 0x642E30).address();
