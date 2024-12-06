@@ -409,6 +409,7 @@ Bool Function UnlockDevice(actor akActor, armor deviceInventory, armor deviceRen
 		return false
 	Endif				
 	zadNativeFunctions.SetDisableUnequip(akActor,deviceInventory,false)
+	zadNativeFunctions.SetDisableUnequip(akActor,deviceRendered,false)
 	if akActor.IsEquipped(deviceInventory) 
 		StorageUtil.SetIntValue(akActor, "zad_RemovalToken" + deviceInventory, 1)		
 		akActor.UnequipItemEx(deviceInventory, 0, false)
@@ -527,6 +528,7 @@ Function RemoveQuestDevice(actor akActor, armor deviceInventory, armor deviceRen
 	questItemRemovalAuthorizationToken = RemovalToken
 	StorageUtil.SetIntValue(akActor, "zad_RemovalToken" + deviceInventory, 1)
 	zadNativeFunctions.SetDisableUnequip(akActor,deviceInventory,false)
+	zadNativeFunctions.SetDisableUnequip(akActor,deviceRendered,false)
 	akActor.UnequipItemEx(deviceInventory, 0, false)
 	akActor.RemoveItem(deviceRendered, 1, true) 		
     if destroyDevice
