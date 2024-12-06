@@ -147,7 +147,7 @@ namespace DeviousDevices {
 
             static inline void Install() 
             {
-                const uintptr_t loc_UpdatePlayerMovementAddress = RELOCATION_ID(41291, 42371).address();
+                const uintptr_t loc_UpdatePlayerMovementAddress = REL::VariantID(41291, 42371, 0x72DF10).address();
                 func = (decltype(func))loc_UpdatePlayerMovementAddress;
                 
                 DetourTransactionBegin();
