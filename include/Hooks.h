@@ -159,7 +159,7 @@ namespace DeviousDevices {
 
         //
 
-        typedef void(WINAPI* OriginalEquipObject)(  RE::ActorEquipManager* a_1, 
+        typedef bool(WINAPI* OriginalEquipObject)(  RE::ActorEquipManager* a_1, 
                                                     RE::Actor* a_actor,
                                                     RE::TESBoundObject* a_object, 
                                                     RE::ExtraDataList* a_extraData,
@@ -195,7 +195,7 @@ namespace DeviousDevices {
         inline OriginalInventoryUIUnequipObject _InventoryUIUnequipObject;
         inline OriginalEquipObject2     _EquipObject2;
 
-        static void EquipObject(RE::ActorEquipManager*      a_1,
+        static bool EquipObject(RE::ActorEquipManager*      a_1,
                                 RE::Actor*                  a_actor,
                                 RE::TESBoundObject*         a_item,
                                 RE::ExtraDataList*          a_extraData,
@@ -218,10 +218,10 @@ namespace DeviousDevices {
                             if (DDInventoryUnequip == false) {
                                 a_playSounds = false;
                             }
-                            return _EquipObject(a_1, a_actor, a_item, a_extraData, a_count, a_slot, false, true, a_playSounds,
-                                true);
+                            return _EquipObject(a_1, a_actor, a_item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip, a_playSounds,
+                                a_applyNow);
                         } else {
-                            return;
+                            return false;
                         }
                     }
                 }
@@ -232,10 +232,11 @@ namespace DeviousDevices {
                             if (DDInventoryUnequip == false) {
                                 a_playSounds = false;
                             }
-                            return _EquipObject(a_1, a_actor, a_item, a_extraData, a_count, a_slot, false, true, a_playSounds,
-                                true);
+                            return _EquipObject(a_1, a_actor, a_item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
+                                                a_playSounds,
+                                a_applyNow);
                         } else {
-                            return;
+                            return false;
                         }
                     }
                 }
@@ -274,16 +275,16 @@ namespace DeviousDevices {
                      RE::UI::GetSingleton()->IsMenuOpen("InventoryMenu") && (GetNormalUnequipMode()==true || (REL::Module::GetRuntime() == REL::Module::Runtime::SE) ))) {
                     DEBUG("Unequip allowed or user requested unequip")
                     
-                    return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, false, true,
-                                          a_playSounds, true, a_slotToReplace);
+                    return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
+                                          a_playSounds, a_applyNow, a_slotToReplace);
                 } else {
                     DEBUG("Unequip prevented")
                     return false;
                 }
             } else {
                 DEBUG("Unequip ignored and allowed")
-                return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, false, a_forceEquip,
-                                      a_playSounds, true, a_slotToReplace);
+                return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
+                                      a_playSounds, a_applyNow, a_slotToReplace);
             }
         }
 
@@ -333,7 +334,7 @@ namespace DeviousDevices {
                 DetourAttach(&(PVOID&)_EquipObject, (PBYTE)&EquipObject);
 
                 if (DetourTransactionCommit() == NO_ERROR) {
-                    LOG("Installed papyrus hook on EquipObject at {0:x} with replacement from address {0:x}",
+                    LOG("Installed papyrus hook on EqquipObject at {0:x} with replacement from address {0:x}",
                         loc_equipTargetAddress, (void*)&EquipObject);
                 } else {
                     WARN("Failed to install papyrus hook on EquipObject");
