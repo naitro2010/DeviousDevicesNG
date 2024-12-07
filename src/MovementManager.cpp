@@ -58,8 +58,13 @@ void DeviousDevices::MovementManager::ManagePlayerInput(RE::PlayerControlsData* 
     if (_PlayerForceWalk && (!loc_camera || !loc_camera->IsInFreeCameraMode()))
     {
         static const float loc_maxspeed = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSpeedMult",0.15f);
-        if (std::abs(a_data->moveInputVec.x) > loc_maxspeed) a_data->moveInputVec.x = a_data->moveInputVec.x > 0.0f ? loc_maxspeed : -1.0f*loc_maxspeed;
-        if (std::abs(a_data->moveInputVec.y) > loc_maxspeed) a_data->moveInputVec.y = a_data->moveInputVec.y > 0.0f ? loc_maxspeed : -1.0f*loc_maxspeed;
+        const float loc_amp = a_data->moveInputVec.Length();
+        // Truncate vector
+        if (loc_amp > loc_maxspeed)
+        {
+            a_data->moveInputVec.x = (a_data->moveInputVec.x/loc_amp)*loc_maxspeed;
+            a_data->moveInputVec.y = (a_data->moveInputVec.y/loc_amp)*loc_maxspeed;
+        }
     }
 }
 
