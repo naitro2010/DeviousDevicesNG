@@ -24,7 +24,7 @@ MiscObject Property Blueprint Auto						; For pickable devices, this build kit w
 
 ; Sex scenes - Attention: This feature assumes that the subject locked in the devive is female. It will not do anything for male characters.
 String[] Property SexAnimations Auto					; List of sex animations for this device. The strings contain the names of the animations, as they will have to get retrieved from the SL repository by name, since they're private.
-Bool Property PartnerIsInFront = False Auto				; If true, the partner stands in front of the device, otherwise in the back. If there is more than one animation per device, the animation MUST use the SAME values for position.
+Bool Property PartnerIsInFront = true Auto				; If true, the partner stands in front of the device, otherwise in the back. If there is more than one animation per device, the animation MUST use the SAME values for position. changed default to true becase the majority of devices are of the in-front variety - krzp
 Int Property Distance = 45 Auto							; Distance from the device the partner is standing.
 Bool Property AllowPasserbyAction = False Auto			; Allows the code to check for random actors closeby and use them for random interactions with the subject in the device.
 Float Property PasserbyCooldown = 0.0 Auto				; If this number is greater than zero, this cooldown (in hours) will be applied to consecutive passerby events.
@@ -287,8 +287,7 @@ Function LockActor(actor act)
 	PosX = user.GetPositionX()
 	PosY = user.GetPositionY()
 	PosZ = user.GetPositionZ()	
-	clib.StoreBondage(user, InvalidDevices, HideAllDevices)
-	user.SetVehicle(self)		
+	clib.StoreBondage(user, InvalidDevices, HideAllDevices)	
 	clib.SetNiOverrideOverride(user)
 	ActorUtil.RemovePackageOverride(user, clib.zadc_pk_donothing)	
 	Package Pose = clib.GetOverridePose(self)
@@ -348,14 +347,15 @@ Function LockActor(actor act)
 	If SendDeviceModEvents
 		SendDeviceEvent(True)
 	EndIf
+	AntiCL(user)
 EndFunction
 
 Function UnlockActor()
 	if user
 		self.enable()
 		UnregisterForUpdate()
-		UnregisterForAllKeys()
-		user.SetVehicle(none)		
+		UnregisterForAllKeys()	
+		user.StopTranslation()
 		ActorUtil.RemovePackageOverride(user, CurrentPose)		
 		Debug.SendAnimationEvent(User, "IdleForceDefaultState")				
 		If user == Game.GetPlayer()			
@@ -373,9 +373,9 @@ Function UnlockActor()
 		RemoveEffects(user)
 		clib.ResetNiOverrideOverride(user)
 		RemoveDevices(user)
-		If ForceStripActor			
-			clib.RestoreOutfit(user)
-		EndIf
+		;If ForceStripActor			
+		;	clib.RestoreOutfit(user)
+		;EndIf
 		clib.RestoreBondage(user)
 		User.EvaluatePackage()
 		If SendDeviceModEvents
@@ -813,8 +813,8 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
-Event OnSexEnd(string eventName, string argString, float argNum, form sender)			
-	sslThreadController SLcontroller = libs.SexLab.HookController(argString)	
+Event OnDDCSLEnd(int tid, bool hasPlayer)		
+	sslThreadController SLcontroller = libs.SexLab.GetController(tid)
 	Actor[] actors = SLcontroller.Positions
 	int numactors = actors.Length
 	int i = 0	
@@ -832,8 +832,6 @@ Event OnSexEnd(string eventName, string argString, float argNum, form sender)
 	endif
 	LastPasserbyEventAt = Utility.GetCurrentGameTime()
 	UnRegisterForModEvent("AnimationEnd")
-	User.SetPosition(FPosX, FPosY, FPosZ)
-	User.SetAngle(FAngleX, FAngleY, FAngleZ)
 	User.SetDoingFavor(False)
     If User == libs.PlayerRef
         Game.SetPlayerAIDriven()
@@ -845,17 +843,37 @@ Event OnSexEnd(string eventName, string argString, float argNum, form sender)
         User.SetRestrained(True)
         User.SetHeadTracking(False)
     EndIf
+	User.SetPosition(FPosX, FPosY, FPosZ)
+	User.SetAngle(FAngleX, FAngleY, FAngleZ)
     ActorUtil.AddPackageOverride(user, PickRandomPose(), 99)	
 	User.EvaluatePackage()
+	AntiCL(user)
 	CheckSelfBondageRelease()
+	UnregisterForModEvent("HookAnimationEnd_DDCEnd")
 EndEvent
 
 Function MoveToBehind(ObjectReference akObjB, ObjectReference akObjA, Float afDistance = 45.0)
-	akObjA.MoveTo(akObjB, -afDistance * Math.Sin(akObjB.GetAngleZ()), -afDistance * Math.Cos(akObjB.GetAngleZ()), 0.0)
+	akObjA.MoveTo(akObjB, -afDistance * Math.Sin(akObjB.GetAngleZ()), -afDistance * Math.Cos(akObjB.GetAngleZ()), 0.0, abMatchRotation = true) 
+	If akObjA == libs.PlayerRef
+		akObjA.SetAngle(akObjB.GetAngleX(), akObjB.GetAngleY(), akObjB.GetAngleZ())
+		akObjA.SetAngle(akObjA.GetAngleX(), akObjA.GetAngleY(), akObjA.GetAngleZ() + 180.0) 
+		Utility.wait(0.1)
+	elseif user == libs.PlayerRef
+		;akObjA.SetAngle(akObjA.GetAngleX(), akObjA.GetAngleY(), akObject.GetAngleZ()) 
+		libs.PlayerRef.SetAngle(libs.PlayerRef.GetAngleX(), libs.PlayerRef.GetAngleY(), libs.PlayerRef.GetAngleZ() + 180.0) ; rotate the player 180 degrees so the anim starts at the correct rotation
+		Utility.wait(0.1)
+	endif
 EndFunction
 
 Function MoveToFront(ObjectReference akObjB, ObjectReference akObjA, Float afDistance = 120.0)
-	akObjA.MoveTo(akObjB, afDistance * Math.Sin(akObjB.GetAngleZ()), afDistance * Math.Cos(akObjB.GetAngleZ()), 0.0)
+		akObjA.MoveTo(akObjB, afDistance * Math.Sin(akObjB.GetAngleZ()), afDistance * Math.Cos(akObjB.GetAngleZ()), 0.0, abMatchRotation = true)
+		If akObjA == libs.PlayerRef
+			akObjA.SetAngle(akObjB.GetAngleX(), akObjB.GetAngleY(), akObjB.GetAngleZ())
+			akObjA.SetAngle(akObjA.GetAngleX(), akObjA.GetAngleY(), akObjA.GetAngleZ() + 180.0) 
+		elseif user == libs.PlayerRef
+			libs.PlayerRef.SetAngle(libs.PlayerRef.GetAngleX(), libs.PlayerRef.GetAngleY(), libs.PlayerRef.GetAngleZ() + 180.0) 
+			Utility.wait(0.1)
+		Endif
 EndFunction
 
 Function FaceObject(ObjectReference akObject, ObjectReference akReference, Float afOffset = 0.0)
@@ -877,17 +895,24 @@ Bool Function SexScene(Actor Partner, String AnimationName = "")
 	RegisterForModEvent("AnimationEnd", "OnSexEnd")	
 	; Remove the struggle anim, if playing
 	ActorUtil.RemovePackageOverride(User, CurrentStruggle)
-	If PartnerIsInFront
-		MoveToFront(self, Partner, Distance)
-	Else
-		MoveToBehind(self, Partner, Distance)
-	EndIf	
+
 	FPosX = User.GetPositionX()
 	FPosY = User.GetPositionY()
 	FPosZ = User.GetPositionZ()
 	FAngleX = User.GetAngleX()
 	FAngleY = User.GetAngleY()
 	FAngleZ = User.GetAngleZ()
+	
+	; due to SL P+ 1.8.2.3 not processing centeron correctly, 
+	; this block is left here commented for legacy compatibility 
+	; for anyone still using it - every other version works correctly without it - krzp
+	
+	;	If PartnerIsInFront
+	;		MoveToFront(self, Partner, Distance)
+	;	Else
+	;		MoveToBehind(self, Partner, Distance)
+	;	EndIf	
+	
 	sslBaseAnimation[] Sanims	
 	Sanims = New sslBaseAnimation[1]
 	String ani
@@ -912,7 +937,12 @@ Bool Function SexScene(Actor Partner, String AnimationName = "")
 		SceneSexActors = new actor[2]
 		SceneSexActors[0] = User		
 		SceneSexActors[1] = Partner	
-		libs.SexLab.StartSex(Positions = SceneSexActors, anims = Sanims, centeron = User, allowbed = false)
+		RegisterForModEvent("HookAnimationEnd_DDCEnd", "OnDDCSLEnd")    
+		ActorUtil.RemovePackageOverride(User, CurrentPose)	; otherwise the anims go awry - krzp	
+		If SKSE.GetPluginVersion("SexLabUtil") >= 34340864
+			Debug.SendAnimationEvent(User, "IdleForceDefaultState")	; sneaky v2 p+ compatibility to make sure animations start from a default idle, otherwise the first stage on the actor in a contraption didn't play in my tests
+		endif
+		libs.SexLab.StartSex(Positions = SceneSexActors, anims = Sanims, centeron = User, allowbed = false, hook = "DDCEnd")
 		return true
 	EndIf
 	return false
@@ -1420,4 +1450,18 @@ Float Function CalclulateLockPickSuccess()
 		return 100.0
 	Endif
 	return result
+EndFunction
+
+Function AntiCL(actor akActor)
+	;; anti-collision hack. this will put the actor above the device in a state where they have no collision for a long time, longer than anyone will likely ever be in the same room with a device. same trick sexlab uses during scenes. kudos to darkconsole - krzp
+	akActor.SetAngle(0.0,0.0,self.GetAngleZ())
+	akActor.TranslateTo(           \
+		self.GetPositionX(),       \
+		self.GetPositionY(),       \
+		self.GetPositionZ(),       \
+		self.GetAngleX(),          \
+		self.GetAngleY(),          \
+		(self.GetAngleZ() + 0.01), \
+		10000,0.000001             \
+	)
 EndFunction
