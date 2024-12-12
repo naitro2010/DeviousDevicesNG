@@ -318,9 +318,6 @@ namespace DeviousDevices
     static void SetDisableUnequip(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv, bool disable) {
         LOG("SetDisableUnequip called")
         DeviceReader::GetSingleton()->SetDisableUnequip(actor, inv, disable);
-        if (RE::TESObjectARMO* loc_res = DeviceReader::GetSingleton()->GetDeviceRender(inv)) {
-            DeviceReader::GetSingleton()->SetDisableUnequip(actor, loc_res, disable);
-        }
     }
     static bool GetDisableUnequip(PAPYRUSFUNCHANDLE, RE::Actor* actor, RE::TESObjectARMO* inv) {
         LOG("GetDisableUnequip called")
