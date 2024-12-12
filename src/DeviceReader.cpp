@@ -541,7 +541,6 @@ bool DeviceReader::EquipRenderedDevice(RE::Actor* actor, DeviceUnit* device)
         if (loc_rendered != nullptr) 
         {
             if (actor->AddWornItem(loc_rendered, 1, false, 0, 0)) {
-                DeviceReader::GetSingleton()->SetDisableUnequip(actor, device->deviceInventory, true);
                 return true;
             }
         } 
@@ -562,7 +561,6 @@ bool DeviceReader::UnequipRenderedDevice(RE::Actor* actor, DeviceUnit* device)
         RE::TESObjectARMO* rendered = device->GetRenderedDevice();
 
         if (rendered != nullptr) {
-            DeviceReader::GetSingleton()->SetDisableUnequip(actor, device->deviceInventory, false);
             actor->UnequipItem(0, rendered);
             return true;
         } else {
