@@ -272,7 +272,12 @@ namespace DeviousDevices {
                 item->As<RE::TESObjectARMO>()) {
                 if (DeviceReader::GetSingleton()->GetDisableUnequip(actor, item->As<RE::TESObjectARMO>()) == false ||
                     (RE::UI::GetSingleton() && DeviousDevices::HooksVirtual::GetSingleton() &&
-                     RE::UI::GetSingleton()->IsMenuOpen("InventoryMenu") && (GetNormalUnequipMode()==true || (REL::Module::GetRuntime() == REL::Module::Runtime::SE) ))) {
+                     (RE::UI::GetSingleton()->IsMenuOpen("InventoryMenu") ||
+                      RE::UI::GetSingleton()->IsMenuOpen("ContainerMenu") ||
+                      RE::UI::GetSingleton()->IsMenuOpen("GiftMenu") ||
+                      RE::UI::GetSingleton()->IsMenuOpen("BarterMenu")) &&
+                     (GetNormalUnequipMode() == true || (REL::Module::GetRuntime() == REL::Module::Runtime::SE)))) 
+                {
                     DEBUG("Unequip allowed or user requested unequip")
                     
                     return _UnequipObject(a_1, actor, item, a_extraData, a_count, a_slot, a_queueEquip, a_forceEquip,
