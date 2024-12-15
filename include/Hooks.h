@@ -269,7 +269,7 @@ namespace DeviousDevices {
 
             // need to check for quest item
             if (DeviceReader::GetSingleton() && actor && item && item->formType == RE::FormType::Armor &&
-                item->As<RE::TESObjectARMO>() && a_forceEquip==false) {
+                item->As<RE::TESObjectARMO>()) {
                 if (DeviceReader::GetSingleton()->GetDisableUnequip(actor, item->As<RE::TESObjectARMO>()) == false ||
                     (RE::UI::GetSingleton() && DeviousDevices::HooksVirtual::GetSingleton() &&
                      (RE::UI::GetSingleton()->IsMenuOpen("InventoryMenu") ||
