@@ -185,7 +185,7 @@ namespace DeviousDevices {
                                                     std::uint64_t a_applyNow, 
                                                     std::uint64_t a_slotToReplace);
 
-        typedef void(WINAPI* OriginalEquipObject2)(RE::ActorEquipManager* a_1,
+        typedef uint64_t(WINAPI* OriginalEquipObject2)(RE::ActorEquipManager* a_1,
                                                        RE::Actor* actor, 
                                                        RE::TESBoundObject* item,
                                                        std::uint64_t a_extradata, 
@@ -352,7 +352,7 @@ namespace DeviousDevices {
         // Some mods or game itself calls this method sometimes directly (mainly for NPCs). 
         // Because of that, the EquipObject hook will not work 100% of time
         // Using this will make it bulletproof
-        static void EquipObject2(RE::ActorEquipManager* a_1,RE::Actor* a_actor, RE::TESBoundObject* a_item,
+        static uint64_t EquipObject2(RE::ActorEquipManager* a_1,RE::Actor* a_actor, RE::TESBoundObject* a_item,
                                   std::uint64_t a_extradata, std::uint64_t a_unkw)
         {
             //DEBUG("EquipBipedObject({},{}) called",a_actor->GetName(),a_item->GetName())
@@ -361,7 +361,7 @@ namespace DeviousDevices {
             if (InventoryFilter::GetSingleton()->EquipFilter(a_actor, a_item)) {
                 DEBUG("EquipObject2 restricted <{:08X}:{}> for <{:08X}:{}>", a_item->GetFormID(), a_item->GetName(),
                     a_actor->GetFormID(), a_actor->GetName())
-                return;
+                return 0;
             }
             return _EquipObject2(a_1,a_actor,a_item,a_extradata,a_unkw);
         }
