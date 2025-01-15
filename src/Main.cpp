@@ -83,6 +83,7 @@ namespace {
                     DeviousDevices::UpdateManager::GetSingleton()->Setup();
                     DeviousDevices::ExpressionManager::GetSingleton()->Setup();
                     DeviousDevices::HooksVirtual::GetSingleton()->Setup();
+                    DeviousDevices::MovementManager::GetSingleton()->Setup();
                     if (!DeviousDevicesAPI::g_API) DeviousDevicesAPI::g_API = new DeviousDevicesAPI::DeviousDevicesAPI;
                     DEBUG("API ready - 0x{:016X}",(uintptr_t)DeviousDevicesAPI::g_API);
                     break;

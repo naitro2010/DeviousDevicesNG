@@ -377,6 +377,10 @@ namespace DeviousDevices
     {
         if (a_actor == nullptr) return;
 
+        // If actor have keyword zad_GagCustomExpression, the native update should be skipped
+        if (LibFunctions::GetSingleton()->WornHasKeyword(a_actor,"zad_GagCustomExpression")) return;
+
+
         const std::vector<float> loc_new = GetGagEffectPreset(a_actor);
 
         if (loc_new.size() > 0)

@@ -8,7 +8,9 @@ SINGLETONBODY(DeviousDevices::DeviceHiderManager)
 
 void DeviousDevices::DeviceHiderManager::Setup()
 {
-    if (!_setup)
+    const bool loc_enabled = ConfigManager::GetSingleton()->GetVariable<bool>("DeviceHider.bEnabled",true);
+
+    if (loc_enabled && !_setup)
     {
         DEBUG("DeviceHiderManager::Setup() - called")
         RE::TESDataHandler* loc_datahandler = RE::TESDataHandler::GetSingleton();

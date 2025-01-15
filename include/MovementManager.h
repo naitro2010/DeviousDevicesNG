@@ -13,10 +13,10 @@ namespace DeviousDevices
         void  ManageAutoMove(RE::PlayerControls* a_pc);
         void  ManagePlayerInput(RE::PlayerControlsData* a_data);
         bool  ManageWeapons(RE::Actor* a_actor);
+        bool  ManageSprint(RE::Actor* a_actor, bool a_prevres);
     private:
         bool _init = false;
         bool _PlayerForceWalk       = false;
         bool _PlayerDisableDraw     = false;
-
     };
 }

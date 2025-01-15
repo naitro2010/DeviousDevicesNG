@@ -148,6 +148,27 @@ namespace DeviousDevices {
             }
         };
 
+        struct CheckActorCanSprintHook {
+            static bool thunk(RE::Actor* a_actor) 
+            {
+                static auto loc_manager = MovementManager::GetSingleton();
+                bool loc_res = func(a_actor);
+                loc_res = loc_manager->ManageSprint(a_actor,loc_res);
+                return loc_res;
+            }
+            static inline REL::Relocation<decltype(thunk)> func;
+
+            static inline void Install() 
+            {
+                // 140661880 = 37234
+                const uintptr_t loc_Address = REL::VariantID(36252, 37234,0x0).address();
+                func = (decltype(func))loc_Address;
+                
+                DetourTransactionBegin();
+                DetourUpdateThread(GetCurrentThread());
+                DetourAttach(&(PVOID&)func, (PBYTE)&thunk);
+            }
+        };
 
         //
 
@@ -257,6 +278,7 @@ namespace DeviousDevices {
 
             UpdateMovementSpeedHook::Install();
             UpdateAutoMoveHook::Install();
+            CheckActorCanSprintHook::Install();
 
             const uintptr_t loc_equip2TargetAddress = REL::VariantID(37974, 38929, 0x642E30).address();
             _EquipObject2 = (OriginalEquipObject2)loc_equip2TargetAddress;
