@@ -17,7 +17,7 @@ Bool Property ForceStripActor = True Auto				; If enabled, the actor will be aut
 Bool Property ScriptedDevice = False Auto				; If enabled, the device cannot be interacted with via dialogue. Activating the device via a package will still work for NPCs. Useful for devices that need to be used in scenes.
 Package[] Property BoundPose Auto						; Packages containing the actual poses
 Package[] Property StrugglePose Auto					; Packages containing the struggle poses
-Bool Property SendDeviceModEvents = False Auto			; If enabled, the device will send mod events when an actor is getting locked or unlocked by this device.
+Bool Property SendDeviceModEvents = True Auto			; If enabled, the device will send mod events when an actor is getting locked or unlocked by this device.
 ObjectReference[] Property LinkedDevices Auto			; With this list, groups of linked furniture devices can be defined. The interpretation of the values is up to the mod setting them up. The list can e.g. be used to identify closeby devices to lock up followers etc.
 Bool Property CanBePickedUp = False Auto				; If set to true, this device can be picked up by the player (a build kit will be placed in her inventory and the device is removed from the world)
 MiscObject Property Blueprint Auto						; For pickable devices, this build kit will be created upon picking up the device.
