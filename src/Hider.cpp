@@ -331,7 +331,7 @@ void DeviousDevices::DeviceHiderManager::InitWornArmor(RE::TESObjectARMO* a_armo
         bool hider_override=false;
         for (int slot: hider_override_slots) {
             if (slot >= 30) {
-                if ((((unsigned int)a_armor->GetSlotMask()) & 1<<(slot-30))!=0) {
+                if ((((unsigned int)a_armor->GetSlotMask()) & (1<<(slot-30)))!=0) {
                     hider_override=true;
                 }
             }
