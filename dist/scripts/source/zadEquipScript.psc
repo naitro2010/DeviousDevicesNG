@@ -229,12 +229,13 @@ Event OnEquipped(Actor akActor)
     EndIf
     
     OnEquippedPre(akActor, silent=silently)
+    if !akActor.IsEquipped(DeviceInventory)
+        akActor.EquipItem(DeviceInventory, false, true)
+    EndIf  
     ObjectReference invRef=akActor.DropObject(DeviceInventory,1)
     Int InvUniqueId=nioverride.GetObjectUniqueID(invRef)
     akActor.AddItem(invRef,1,True)
-    if !akActor.IsEquipped(DeviceInventory)
-        akActor.EquipItem(DeviceInventory, false, true)
-    EndIf    
+      
     
 	
 	
