@@ -1406,6 +1406,24 @@ Function SendDeviceEquippedEventVerbose(armor inventoryDevice, keyword deviceKey
 		ModEvent.PushForm(Handle, akActor)		
 		ModEvent.Send(Handle)
 	Endif	
+	Int InvUniqueId=nioverride.GetObjectUniqueID(inventoryDevice)
+	
+	Int RenderUniqueId=nioverride.GetObjectUniqueID(GetRenderedDevice(inventoryDevice))
+	if (InvUniqueId==0)
+		return
+	EndIf
+	if (RenderUniqueId==0)
+		return
+	EndIf
+	Int MaskIndex=0
+	Int MaxMaskIndex=Game.GetNumTintMasks()
+	nioverride.EnableTintTextureCache()
+	While (MaskIndex < MaxMaskIndex)
+		nioverride.SetItemDyeColor(RenderUniqueId,MaskIndex,nioverride.GetItemDyeColor(InvUniqueId,MaskIndex))
+		MaskIndex=MaskIndex+1
+	EndWhile
+	nioverride.UpdateItemDyeColor(akActor,RenderUniqueId)
+	nioverride.ReleaseTintTextureCache()
 EndFunction
 
 Function SendDeviceRemovedEventVerbose(armor inventoryDevice, keyword deviceKeyword, actor akActor)
