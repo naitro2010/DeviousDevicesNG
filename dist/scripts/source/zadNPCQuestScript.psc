@@ -16,7 +16,7 @@ Function DoRegisterGameTime()
             Debug.MessageBox("Libs is none in zadNPCQuestScript. Incomplete uninstall/upgrade attempt?")
             Debug.Trace("[Zad]: Libs is none in zadNPCQuestScript. Incomplete uninstall/upgrade attempt?")
         else
-            float duration = libs.Config.EventInterval - (Utility.GetCurrentGameTime() - LastUpdateTime)
+            float duration = libs.Config.EventInterval - (libs.GameDaysPassed.GetValue() - LastUpdateTime)
             if duration <= 0 || duration > libs.Config.EventInterval ; Sanity check
                 duration = libs.Config.EventInterval
             EndIf
@@ -42,7 +42,7 @@ Event OnUpdateGameTime()
     else
         IsProcessing = True
         libs.Log("ZadNpc::OnUpdateGameTime()")
-        LastUpdateTime = Utility.GetCurrentGameTime()
+        LastUpdateTime = libs.GameDaysPassed.GetValue()
         if !libs.GlobalEventFlag
             libs.Log("Event processing is currently disabled.")
         else

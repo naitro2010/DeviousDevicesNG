@@ -282,7 +282,7 @@ FormList Property zadStandardKeywords Auto
 Keyword Property questItemRemovalAuthorizationToken = None Auto
 FormList Property zadDeviceTypes Auto	; List of all main device type keywords. Useful for iterating functions.
 FormList Property zad_AlwaysSilent Auto	; Actors in this list will ALWAYS equip or unequip DD items silently.
-
+GlobalVariable Property GameDaysPassed Auto
 
 ; Rechargeable Soulgem Stuff
 Soulgem Property SoulgemEmpty Auto
@@ -838,7 +838,7 @@ Function InflateAnalPlug(actor akActor, int amount = 1)
 			log("Setting anal plug inflation to " + (currentVal))
 			zadInflatablePlugStateAnal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentAnal = Utility.GetCurrentGameTime()
+		LastInflationAdjustmentAnal = GameDaysPassed.GetValue()
 	EndIf
 	SendInflationEvent(akActor, False, True, currentval)
 	Aroused.UpdateActorExposure(akActor, 15)
@@ -880,7 +880,7 @@ Function InflateVaginalPlug(actor akActor, int amount = 1)
 			log("Setting vaginal plug inflation to " + (currentVal))
 			zadInflatablePlugStateVaginal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentVaginal = Utility.GetCurrentGameTime()
+		LastInflationAdjustmentVaginal = GameDaysPassed.GetValue()
 	EndIf
 	SendInflationEvent(akActor, True, True, currentval)
 	Aroused.UpdateActorExposure(akActor, 15)
@@ -941,7 +941,7 @@ Function DeflateVaginalPlug(actor akActor, int amount = 1)
 			log("Setting vaginal plug inflation to " + (currentVal))
 			zadInflatablePlugStateVaginal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentVaginal = Utility.GetCurrentGameTime()	
+		LastInflationAdjustmentVaginal = GameDaysPassed.GetValue()	
 	EndIf
 	SendInflationEvent(akActor, True, False, currentval)
 EndFunction
@@ -962,7 +962,7 @@ Function DeflateAnalPlug(actor akActor, int amount = 1)
 			log("Setting anal plug inflation to " + (currentVal))
 			zadInflatablePlugStateAnal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentAnal = Utility.GetCurrentGameTime()	
+		LastInflationAdjustmentAnal = GameDaysPassed.GetValue()	
 	EndIf
 	SendInflationEvent(akActor, False, False, currentval)
 EndFunction
@@ -1346,7 +1346,7 @@ Function UpdateExposure(actor akRef, float val, bool skipMultiplier=false)
 			Aroused.SetActorExposure(akRef, (newVal + 1) as int)
 		else 														
 			StorageUtil.SetFloatValue(akRef, "SLAroused.ActorExposure", newVal)
-			StorageUtil.SetFloatValue(akRef, "SLAroused.ActorExposureDate", Utility.GetCurrentGameTime())
+			StorageUtil.SetFloatValue(akRef, "SLAroused.ActorExposureDate", GameDaysPassed.GetValue())
 		endif
 		
 	Else
