@@ -624,7 +624,7 @@ bool Function RemoveDeviceWithKey(actor akActor = none, bool destroyDevice=false
 EndFunction
 
 Function ResetLockShield()
-    DeviceEquippedAt = Utility.GetCurrentGameTime()
+    DeviceEquippedAt = libs.GameDaysPassed.GetValue()
     SetLockShield()
 EndFunction
 
@@ -645,7 +645,7 @@ Bool Function CheckLockShield()
         return True
     EndIf
     Float HoursNeeded = LockShieldTimer
-    Float HoursPassed = (Utility.GetCurrentGameTime() - DeviceEquippedAt) * 24.0
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - DeviceEquippedAt) * 24.0
     if HoursPassed > HoursNeeded
         return True
     Else
@@ -676,7 +676,7 @@ Bool Function CheckLockTimer()
         return True
     EndIf
     Float HoursNeeded = LockTimer
-    Float HoursPassed = (Utility.GetCurrentGameTime() - DeviceEquippedAt) * 24.0
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - DeviceEquippedAt) * 24.0
     if HoursPassed > HoursNeeded
         return True
     Else
@@ -763,11 +763,11 @@ EndFunction
 Bool Function CanMakeUnlockAttempt()
     ; check if the character can make an unlock attempt.
     Float HoursNeeded = (UnlockCooldown * CalculateCooldownModifier(False))
-    Float HoursPassed = (Utility.GetCurrentGameTime() - LastUnlockAttemptAt) * 24.0
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastUnlockAttemptAt) * 24.0
     if HoursPassed > HoursNeeded
         If !DeviceKey || (DeviceKey && libs.PlayerRef.GetItemCount(DeviceKey) >= NumberOfKeysNeeded)
             ; don't reset the timer if the player doesn't even have keys, that's mean!
-            LastUnlockAttemptAt = Utility.GetCurrentGameTime()
+            LastUnlockAttemptAt = libs.GameDaysPassed.GetValue()
         EndIf
         return True
     Else
@@ -1049,9 +1049,9 @@ Bool Function CanMakeStruggleEscapeAttempt()
         return False
     EndIf    
     Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-    Float HoursPassed = (Utility.GetCurrentGameTime() - LastStruggleEscapeAttemptAt) * 24.0
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastStruggleEscapeAttemptAt) * 24.0
     if HoursPassed > HoursNeeded
-        LastStruggleEscapeAttemptAt = Utility.GetCurrentGameTime()
+        LastStruggleEscapeAttemptAt = libs.GameDaysPassed.GetValue()
         return True
     Else
         Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1067,9 +1067,9 @@ Bool Function CanMakeCutEscapeAttempt()
         return False
     EndIf    
     Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-    Float HoursPassed = (Utility.GetCurrentGameTime() - LastCutEscapeAttemptAt) * 24.0
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastCutEscapeAttemptAt) * 24.0
     if HoursPassed > HoursNeeded
-        LastCutEscapeAttemptAt = Utility.GetCurrentGameTime()
+        LastCutEscapeAttemptAt = libs.GameDaysPassed.GetValue()
         return True
     Else
         Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1086,9 +1086,9 @@ Bool Function CanMakeLockPickEscapeAttempt()
         return False
     EndIf    
     Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-    Float HoursPassed = (Utility.GetCurrentGameTime() - LastLockPickEscapeAttemptAt) * 24.0
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastLockPickEscapeAttemptAt) * 24.0
     if HoursPassed > HoursNeeded
-        LastLockPickEscapeAttemptAt = Utility.GetCurrentGameTime()
+        LastLockPickEscapeAttemptAt = libs.GameDaysPassed.GetValue()
         return True
     Else
         Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1463,9 +1463,9 @@ Int Function RepairJammedLock(Float Chance)
     libs.log("Player is trying to repair " + DeviceName + ". Repair chance after modifiers: " + Chance +"%")
     ; check if the character can make a repair attempt
     Float HoursNeeded = (RepairCooldown * CalculateCooldownModifier(False))
-    Float HoursPassed = (Utility.GetCurrentGameTime() - LastRepairAttemptAt) * 24.0    
+    Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastRepairAttemptAt) * 24.0    
     if HoursPassed > HoursNeeded
-        LastRepairAttemptAt = Utility.GetCurrentGameTime()
+        LastRepairAttemptAt = libs.GameDaysPassed.GetValue()
         If Utility.RandomFloat(0.0, 99.9) < (Chance * CalculateDifficultyModifier(True))
             libs.log("Player has repaired " + DeviceName)
             StorageUtil.SetIntValue(libs.playerref, "zad_Equipped" + libs.LookupDeviceType(zad_DeviousDevice) + "_LockJammedStatus", 0)

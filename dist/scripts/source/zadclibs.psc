@@ -201,7 +201,7 @@ Bool Function SetTimedRelease(ObjectReference FurnitureDevice, Int Hours, Bool R
 		fs.isSelfBondage = True
 		fs.SelfBondageReleaseTimer = Hours
 		if ResetStartTime
-			fs.ReleaseTimerStartedAt = Utility.GetCurrentGameTime()
+			fs.ReleaseTimerStartedAt = libs.GameDaysPassed.GetValue()
 		EndIf
 	EndIf
 EndFunction
