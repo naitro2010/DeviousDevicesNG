@@ -17,7 +17,7 @@ Bool Property ForceStripActor = True Auto				; If enabled, the actor will be aut
 Bool Property ScriptedDevice = False Auto				; If enabled, the device cannot be interacted with via dialogue. Activating the device via a package will still work for NPCs. Useful for devices that need to be used in scenes.
 Package[] Property BoundPose Auto						; Packages containing the actual poses
 Package[] Property StrugglePose Auto					; Packages containing the struggle poses
-Bool Property SendDeviceModEvents = False Auto			; If enabled, the device will send mod events when an actor is getting locked or unlocked by this device.
+Bool Property SendDeviceModEvents = True Auto			; If enabled, the device will send mod events when an actor is getting locked or unlocked by this device.
 ObjectReference[] Property LinkedDevices Auto			; With this list, groups of linked furniture devices can be defined. The interpretation of the values is up to the mod setting them up. The list can e.g. be used to identify closeby devices to lock up followers etc.
 Bool Property CanBePickedUp = False Auto				; If set to true, this device can be picked up by the player (a build kit will be placed in her inventory and the device is removed from the world)
 MiscObject Property Blueprint Auto						; For pickable devices, this build kit will be created upon picking up the device.
@@ -172,7 +172,7 @@ Function RemoveEffects(Actor akActor)
 EndFunction
 
 Function SetLockShield()
-	LockShieldStartedAt = Utility.GetCurrentGameTime()
+	LockShieldStartedAt = libs.GameDaysPassed.GetValue()
 	If (LockShieldTimerMin > 0.0) && (LockShieldTimerMin <= LockShieldTimerMax)
 		LockShieldTimer = ((Utility.RandomFloat(LockShieldTimerMin, LockShieldTimerMax)) * CalculateCooldownModifier(False))
 	Else
@@ -185,7 +185,7 @@ Bool Function CheckLockShield()
 		return True
 	EndIf
 	Float HoursNeeded = LockShieldTimer
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LockShieldStartedAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LockShieldStartedAt) * 24.0
 	if HoursPassed > HoursNeeded
 		return True
 	Else		
@@ -200,7 +200,7 @@ Function CheckSelfBondageRelease()
 		return 
 	EndIf
 	Float HoursNeeded = SelfBondageReleaseTimer
-	Float HoursPassed = (Utility.GetCurrentGameTime() - ReleaseTimerStartedAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - ReleaseTimerStartedAt) * 24.0
 	if HoursPassed > HoursNeeded
 		if user == libs.PlayerRef
 			libs.notify("The timed lock clicks open and frees you from the device!", messageBox = true)
@@ -324,8 +324,8 @@ Function LockActor(actor act)
 	EndIf			
 	clib.StoreDevice(user, self)
 	SetLockShield()	
-	DeviceEquippedAt = Utility.GetCurrentGameTime()
-	ReleaseTimerStartedAt = Utility.GetCurrentGameTime()
+	DeviceEquippedAt = libs.GameDaysPassed.GetValue()
+	ReleaseTimerStartedAt = DeviceEquippedAt
 	If ForceTimer
 		isSelfBondage = True
 	EndIf
@@ -415,9 +415,9 @@ EndEvent
 Bool Function CanMakeUnlockAttempt()
 	; check if the character can make an unlock attempt.
 	Float HoursNeeded = (UnlockCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastUnlockAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastUnlockAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastUnlockAttemptAt = Utility.GetCurrentGameTime()
+		LastUnlockAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -757,7 +757,7 @@ Bool Function PasserbyAction()
 	If !AllowPasserbyAction || !User.Is3DLoaded() || User.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(user)
 		return false
 	EndIf	
-	If ((Utility.GetCurrentGameTime() - LastPasserbyEventAt) * 24) < PasserbyCooldown
+	If ((libs.GameDaysPassed.GetValue() - LastPasserbyEventAt) * 24) < PasserbyCooldown
 		return false
 	EndIf	
 	if SexAnimations.Length == 0 || !clib.GetIsFemale(User)
@@ -830,7 +830,7 @@ Event OnDDCSLEnd(int tid, bool hasPlayer)
 	if !Userfound
 		return
 	endif
-	LastPasserbyEventAt = Utility.GetCurrentGameTime()
+	LastPasserbyEventAt = libs.GameDaysPassed.GetValue()
 	UnRegisterForModEvent("AnimationEnd")
 	User.SetDoingFavor(False)
     If User == libs.PlayerRef
@@ -1118,9 +1118,9 @@ EndFunction
 Bool Function CanMakeStruggleEscapeAttempt()
 	; right now we allow escape attempts regardless of which DD devices are worn
 	Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastStruggleEscapeAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastStruggleEscapeAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastStruggleEscapeAttemptAt = Utility.GetCurrentGameTime()
+		LastStruggleEscapeAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1138,9 +1138,9 @@ EndFunction
 Bool Function CanMakeBreakEscapeAttempt()	
 	; right now we allow escape attempts regardless of which DD devices are worn
 	Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastBreakEscapeAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastBreakEscapeAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastBreakEscapeAttemptAt = Utility.GetCurrentGameTime()
+		LastBreakEscapeAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1158,9 +1158,9 @@ EndFunction
 Bool Function CanMakeLockPickEscapeAttempt()	
 	; right now we allow escape attempts regardless of which DD devices are worn
 	Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastLockPickEscapeAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastLockPickEscapeAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastLockPickEscapeAttemptAt = Utility.GetCurrentGameTime()
+		LastLockPickEscapeAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
