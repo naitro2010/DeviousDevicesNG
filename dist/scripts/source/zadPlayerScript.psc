@@ -100,10 +100,6 @@ Function CheckForSoftDepends()
 	If Game.IsPluginInstalled("DD_Animation_Overhaul_by_Taki17.esp")
 		libs.Error("DDNG: 'DD_Animation_Overhaul_by_Taki17' ESP is active. This ESP is from and old version and no longer required will cause issues. Remove the ESP from your mod manager.")
 	EndIf
-
-	If Game.IsPluginInstalled("Devious Devices SE patch.esp")
-		libs.Error("DDNG: 'Devious Devices SE patch' ESP is active. This ESP is no longer required and will cause issues. Disable the ESP in your loadorder or remove it.")
-	EndIf
 EndFunction
  
 Event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akDestContainer)
