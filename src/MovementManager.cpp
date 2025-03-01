@@ -18,15 +18,18 @@ void DeviousDevices::MovementManager::Update()
     static auto loc_disablecombatkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asDisableCombatKeywords",false);
     
     _PlayerDisableDraw = false;
-    for (auto&& it :loc_disablecombatkwds)
+    if (LibFunctions::GetSingleton()->WornHasKeyword(RE::PlayerCharacter::GetSingleton(),"zad_DeviousHeavyBondage"))
     {
-        if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
+        for (auto&& it :loc_disablecombatkwds)
         {
-            _PlayerDisableDraw = true;
-            break;
+            if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
+            {
+                _PlayerDisableDraw = true;
+                break;
+            }
         }
     }
-    
+
     static auto loc_forcewalkkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asForceWalkKeywords",false);
     
     _PlayerForceWalk = false;
