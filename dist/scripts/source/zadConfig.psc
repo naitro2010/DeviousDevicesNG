@@ -882,7 +882,7 @@ EndState
 
 State BlindfoldModeST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(blindfoldMode)
 		SetMenuDialogDefaultIndex(2)
 		SetMenuDialogOptions(blindfoldList)
 	EndEvent
@@ -919,7 +919,7 @@ EndState
 
 State CooldownModST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(CooldownDifficulty)
 		SetMenuDialogDefaultIndex(4)
 		SetMenuDialogOptions(EsccapeDifficultyList)
 	EndEvent
@@ -938,7 +938,7 @@ EndState
 
 State DeviceHiderST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(DevicesUnderneathSlot)
 		SetMenuDialogDefaultIndex(12)
 		SetMenuDialogOptions(SlotMasks)
 	EndEvent
@@ -957,7 +957,7 @@ EndState
 
 State DeviceHiderNPCST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(DevicesUnderneathSlot)
 		SetMenuDialogDefaultIndex(1)
 		SetMenuDialogOptions(hiderSetting)
 	EndEvent
@@ -978,7 +978,7 @@ EndState
 
 State DifficultyModST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(EscapeDifficulty)
 		SetMenuDialogDefaultIndex(4)
 		SetMenuDialogOptions(EsccapeDifficultyList)
 	EndEvent
@@ -997,7 +997,7 @@ EndState
 
 State KeyBreakModST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(KeyDifficulty)
 		SetMenuDialogDefaultIndex(4)
 		SetMenuDialogOptions(EsccapeDifficultyList)
 	EndEvent
@@ -1016,7 +1016,7 @@ EndState
 
 State RubberSoundFreqST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(0)
+		SetMenuDialogStartIndex(RubberSoundMode)
 		SetMenuDialogDefaultIndex(1)
 		SetMenuDialogOptions(SoundList)
 	EndEvent
