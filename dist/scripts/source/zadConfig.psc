@@ -136,11 +136,12 @@ Function SetupDifficulties()
 EndFunction
 
 Function SetupPages()
-	Pages = new string[4]	
+	Pages = new string[5]
 	Pages[0] = "Devices"
 	Pages[1] = "Events"
-	Pages[2] = "Device Hider"
-	Pages[3] = "Debug"
+	Pages[2] = "Device Hider 1"
+	Pages[3] = "Device Hider 2"
+	Pages[4] = "Debug"
 EndFunction
 
 Function SetupSlotMasks()
@@ -167,27 +168,27 @@ Function SetupSlotMasks()
 	SlotMasks[12] = "Long Hair (41)"
 	SlotMasks[13] = "Circlet (42)"
 	SlotMasks[14] = "Ears (43)"
-	SlotMasks[15] = "Gags (44)"
+	SlotMasks[15] = "Gag (44)"
 	SlotMasks[16] = "Collar (45)"
-	SlotMasks[17] = "Heavy Bondage/Cloaks (46)"
-	SlotMasks[18] = "Backpacks (47)"
-	SlotMasks[19] = "Plugs (Anal) (48)"
+	SlotMasks[17] = "Heavy Bondage/Cloak (46)"
+	SlotMasks[18] = "Backpack (47)"
+	SlotMasks[19] = "Anal Plug (48)"
 	SlotMasks[20] = "Chastity Belt (49)"
-	SlotMasks[21] = "Vaginal Piercings (50)"
+	SlotMasks[21] = "Genital Piercing (50)"
 	SlotMasks[22] = "Nipple Piercings (51)"
 	SlotMasks[23] = "SoS (52)"
-	SlotMasks[24] = "Cuffs (Legs) (53)"
+	SlotMasks[24] = "Leg Cuffs (53)"
 
 	SlotMasks[26] = "Blindfold (55)"
 	SlotMasks[27] = "Chastity Bra (56)"
-	SlotMasks[28] = "Plug (Vaginal) (57)"
-	SlotMasks[29] = "Harnesses/Corsets (58)"
-	SlotMasks[30] = "Cuffs (Arm)/Armbinder (59)"
+	SlotMasks[28] = "Vaginal Plug (57)"
+	SlotMasks[29] = "Harness/Corset (58)"
+	SlotMasks[30] = "Arm Cuffs/Armbinder (59)"
 
     hiderSetting = new String[3]
-    hiderSetting[0] = "No hide"
-    hiderSetting[1] = "Hide when bound"
-    hiderSetting[2] = "Always hide"
+    hiderSetting[0] = "No Hide"
+    hiderSetting[1] = "Hide When Bound"
+    hiderSetting[2] = "Always Hide"
 EndFunction
 
 Event OnConfigInit()
@@ -197,6 +198,7 @@ Event OnConfigInit()
 	SetupEscapeDifficulties()
 	SetupBlindfolds()
 	SetupSoundDuration()
+	SetupSlotMasks()
 	SlotMaskOIDS = new int[128]
 EndEvent
 
@@ -298,15 +300,13 @@ Event OnPageReset(String page)
 			i += 1
 		EndWhile
 
-	ElseIf page == "Device Hider"
-		SetupSlotMasks()
-		;not sure if these options are needed at all?
-		SetCursorFillMode(LEFT_TO_RIGHT)
-		AddMenuOptionST("DeviceHiderST", "Device Hider Slot", SlotMasks[DevicesUnderneathSlot], OPTION_FLAG_DISABLED)
-        AddMenuOptionST("DeviceHiderNPCST", "Device Hider Behavior on NPCs", hiderSetting[libs.DevicesUnderneath.Setting])
+	ElseIf page == "Device Hider 1"
 		SetCursorFillMode(TOP_TO_BOTTOM)
+		AddMenuOptionST("DeviceHiderST", "Device Hider Slot", SlotMasks[DevicesUnderneathSlot])
+		AddMenuOptionST("DeviceHiderNPCST", "Device Hider on NPCs", hiderSetting[libs.DevicesUnderneath.Setting])
 		Int i = 1
-		While i < 16
+
+		While i < 8
 			Int index = (i - 1) * 4
 			Int j = 0
 			AddHeaderOption(SlotMasks[i])
@@ -319,7 +319,34 @@ Event OnPageReset(String page)
 
 		SetCursorPosition(1)
 
-		i = 16
+		While i < 16
+			Int index = (i - 1) * 4
+			Int j = 0
+			AddHeaderOption(SlotMasks[i])
+			While j < 4
+				slotMaskOIDs[index + j] = AddMenuOption(SlotMasks[i] + " #"+j, SlotMasks[LookupSlotMask(index+j)])
+				j += 1
+			EndWhile
+			i += 1
+		EndWhile
+
+	ElseIf page == "Device Hider 2"
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		Int i = 16
+
+		While i < 24
+			Int index = (i - 1) * 4
+			Int j = 0
+			AddHeaderOption(SlotMasks[i])
+			While j < 4
+				slotMaskOIDs[index + j] = AddMenuOption(SlotMasks[i] + " #"+j, SlotMasks[LookupSlotMask(index+j)])
+				j += 1
+			EndWhile
+			i += 1
+		EndWhile
+
+		SetCursorPosition(1)
+
 		While i < 32
 			Int index = (i - 1) * 4
 			Int j = 0
@@ -957,17 +984,17 @@ EndState
 
 State DeviceHiderNPCST
 	Event OnMenuOpenST()
-		SetMenuDialogStartIndex(DevicesUnderneathSlot)
+		SetMenuDialogStartIndex(libs.DevicesUnderneath.Setting)
 		SetMenuDialogDefaultIndex(1)
 		SetMenuDialogOptions(hiderSetting)
 	EndEvent
 	Event OnMenuAcceptST(Int index)
-		DevicesUnderneathSlot = index
+		libs.DevicesUnderneath.Setting = index
 		SetMenuOptionValueST(hiderSetting[index])
 		libs.DevicesUnderneath.SyncSetting()
 	EndEvent
 	Event OnDefaultST()
-		DevicesUnderneathSlot = 1
+		libs.DevicesUnderneath.Setting = 1
 		SetMenuOptionValueST(hiderSetting[1])
 		libs.DevicesUnderneath.SyncSetting()
 	EndEvent
