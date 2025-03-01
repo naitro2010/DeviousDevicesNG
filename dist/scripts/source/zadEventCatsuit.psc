@@ -67,7 +67,7 @@ Function PlayerIsInside()
 	elseif selection == 3
 		libs.NotifyPlayer("The suit settles and slides, caressing your skin.")
 	elseif selection == 4
-		libs.NotifyPlayer("Your muscles strain slightly agains the suit. Every breath makes itself felt.")
+		libs.NotifyPlayer("Your muscles strain slightly against the suit. Every breath makes itself felt.")
 	elseif selection == 5
 		libs.NotifyPlayer("The suit is getting a bit slippery on the inside.")
 	endif
