@@ -282,7 +282,16 @@ FormList Property zadStandardKeywords Auto
 Keyword Property questItemRemovalAuthorizationToken = None Auto
 FormList Property zadDeviceTypes Auto	; List of all main device type keywords. Useful for iterating functions.
 FormList Property zad_AlwaysSilent Auto	; Actors in this list will ALWAYS equip or unequip DD items silently.
-GlobalVariable Property GameDaysPassed Auto
+
+GlobalVariable _GameDaysPassed
+GlobalVariable Property GameDaysPassed
+    GlobalVariable Function Get()
+        if !_GameDaysPassed
+            _GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
+        endif
+        return _GameDaysPassed
+    EndFunction
+EndProperty
 
 ; Rechargeable Soulgem Stuff
 Soulgem Property SoulgemEmpty Auto
