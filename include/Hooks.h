@@ -278,7 +278,12 @@ namespace DeviousDevices {
 
             UpdateMovementSpeedHook::Install();
             UpdateAutoMoveHook::Install();
-            CheckActorCanSprintHook::Install();
+
+            if (REL::Module::GetRuntime() != REL::Module::Runtime::VR) /* Forced walk sprint currently does not work for VR */
+            {
+                CheckActorCanSprintHook::Install();
+            }
+            
 
             const uintptr_t loc_equip2TargetAddress = REL::VariantID(37974, 38929, 0x642E30).address();
             _EquipObject2 = (OriginalEquipObject2)loc_equip2TargetAddress;
