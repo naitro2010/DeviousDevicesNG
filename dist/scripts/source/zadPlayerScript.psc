@@ -29,7 +29,13 @@ Event OnAnimationStart(string eventName, string argString, float argNum, form se
     int actor_count = SceneActors.length
     while i < actor_count
         if SceneActors[i].WornHasKeyword(libs.zad_DeviousGag)
-            controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceBySlot(voiceslots[SceneActors[i].GetActorBase().GetSex()]))
+			If SKSE.GetPluginVersion("SexLabUtil") >= 34340864 && SceneActors[i].GetActorBase().GetSex() == 1 ;p+ fix
+				controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceByTags("Female,Gagged", "", True))
+			ElseIf SKSE.GetPluginVersion("SexLabUtil") >= 34340864 && SceneActors[i].GetActorBase().GetSex() == 0 ;p+ fix
+				controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceByTags("Male,Gagged", "", True))
+			else ;regular SL way of switching voices
+				controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceBySlot(voiceslots[SceneActors[i].GetActorBase().GetSex()]))
+			endif
             libs.log(SceneActors[i].GetLeveledActorBase().GetName() + " is gagged. Voice changed.")
         else
             libs.log(SceneActors[i].GetLeveledActorBase().GetName() + " is not gagged.")
