@@ -145,6 +145,10 @@ namespace DeviousDevices {
                 DetourTransactionBegin();
                 DetourUpdateThread(GetCurrentThread());
                 DetourAttach(&(PVOID&)func, (PBYTE)&thunk);
+                if (DetourTransactionCommit() != NO_ERROR)
+                {
+                    ERROR("Failed to install UpdateAutoMoveHook");
+                }
             }
         };
 
@@ -167,6 +171,10 @@ namespace DeviousDevices {
                 DetourTransactionBegin();
                 DetourUpdateThread(GetCurrentThread());
                 DetourAttach(&(PVOID&)func, (PBYTE)&thunk);
+                if (DetourTransactionCommit() != NO_ERROR)
+                {
+                    ERROR("Failed to install CheckActorCanSprintHook");
+                }
             }
         };
 
