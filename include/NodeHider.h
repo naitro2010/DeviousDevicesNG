@@ -23,9 +23,9 @@ namespace DeviousDevices
 
         struct NodeKeyCompare
         {
-            bool operator()(const NodeKey& lhs, const NodeKey& rhs) const
-            {
-                return (lhs.firstPerson < rhs.firstPerson) && (lhs.nodeName.front() < rhs.nodeName.front());
+            bool operator()(const NodeKey& lhs, const NodeKey& rhs) const {
+                return lhs.firstPerson < rhs.firstPerson ||
+                       (!(rhs.firstPerson < lhs.firstPerson) && lhs.nodeName.data() < rhs.nodeName.data());
             }
         };
 
