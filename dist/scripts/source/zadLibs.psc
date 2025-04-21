@@ -33,7 +33,7 @@ zadBoundCombatScript Property BoundCombat auto
 Int Property TweenMenuKey Auto
 bool Property Terminate Auto
 zadexpressionlibs Property ExpLibs auto ;expression libs
-vrikActions Property _vrikActions = None Auto
+Quest Property vrikActionsAPI = None Auto
   
 ; Keywords
 Keyword Property zad_DeviousPlug Auto
@@ -3407,17 +3407,13 @@ EndFunction
 
 function enableVA()
   if EnableVRSupport
-    _vrikActions.VAC_allTime = True
-    _vrikActions.VAC_HandMode = 0
-    _vrikActions.VAC_noMove_HandMode = 0
-    _vrikActions.VAC_noControl_HandMode = 0
-    _vrikActions.EnableVA()
+	zadInterfaceVRIK.EnableVR(vrikActionsAPI)
   EndIf
 EndFunction
 
 function disableVA()
   if EnableVRSupport
-    _vrikActions.VAC_allTime = False
+	zadInterfaceVRIK.DisableVR(vrikActionsAPI)
   EndIf
   ; vrikActions.DisableVA()
 EndFunction
