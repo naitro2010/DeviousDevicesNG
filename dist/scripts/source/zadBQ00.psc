@@ -213,7 +213,7 @@ Function Maintenance()
 	EndIf
   libs.EnableVRSupport = (Game.GetModByName("vrikForceAction.esp") != 255)
   if libs.EnableVRSupport
-    libs._vrikActions = (Game.GetFormFromFile(0x000D61, "vrikForceAction.esp") as _vrikAction_qust_mcm).VRIKActionsConf
+    libs.vrikActionsAPI = Quest.GetQuest("_vrikAction_qust_mcm")
   EndIf
 EndFunction
 
