@@ -585,7 +585,16 @@ sslBaseAnimation[] function SelectValidAnimations(sslThreadController Controller
 		libs.log("Suppressed SexLab animations with tags: " + suppressString)
 	Else
 		;just try to find any SexLab animation that fits our conditions
-		Sanims = SexLab.GetAnimationsByTags(ActorCount, tagString, suppressString, True)
+		;handle creature tags
+		Int[] Genders = libs.SexLab.GenderCount(Controller.Positions)
+		;check if there are creatures in the array
+		If (Genders[2] + Genders[3]) < 1
+			;no creatures
+			Sanims = SexLab.GetAnimationsByTags(actorCount, tagString, suppressString, True)
+		Else
+			;yes creatures
+			Sanims = Sexlab.GetCreatureAnimationsByActorsTags(actorCount, Controller.Positions, tagString, suppressString, True)
+		EndIf
 		libs.log("Selecting SexLab animations with number of actors: " + ActorCount)
 		libs.log("Selecting SexLab animations with tag string: " + tagString)
 		libs.log("Selecting SexLab animations with suppress string: " + suppressString)
