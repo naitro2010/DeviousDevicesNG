@@ -117,8 +117,8 @@ Int[] SlotMaskValues
 Function SetupBlindfolds()
 	blindfoldList = new String[4]
 	blindfoldList[0] = "DD Blindfold"
-	blindfoldList[1] = "DD Blindfold with Leeche's Effect"
-	blindfoldList[2] = "Leeche's Mode"
+	blindfoldList[1] = "DD Blindfold with Leeches Effect"
+	blindfoldList[2] = "Leeches Mode"
 	blindfoldList[3] = "Dark Fog" 
 EndFunction
 
@@ -156,7 +156,7 @@ Function SetupPages()
 	Pages = new string[6]
 	Pages[0] = "Devices"
 	Pages[1] = "Contraptions"
-	Pages[2] = "Events"
+	Pages[2] = "Events "
 	Pages[3] = "Device Hider 1"
 	Pages[4] = "Device Hider 2"
 	Pages[5] = "Debug"
@@ -308,20 +308,24 @@ Event OnPageReset(String page)
 
 	ElseIf page == "Contraptions"
 		SetCursorFillMode(TOP_TO_BOTTOM)
-		AddHeaderOption("Active Struggle Minigame")
+		AddHeaderOption("Struggle Minigame")
 		If LockMenuWhenTied && clibs.GetDevice(libs.PlayerRef) != None
 			AddTextOptionST("Lock", "This menu is locked while locked into a contraption.", "", OPTION_FLAG_DISABLED)
 		Else
-			AddToggleOptionST("ShowMinigameTutorialST", "Show Tutorial", ShowMinigameTutorial)
-			AddToggleOptionST("ShowMinigameNotificationsST", "Show Notifications", ShowMinigameNotifications)
 			AddSliderOptionST("MinigameMinSequenceLengthST", "Actions Needed", MinigameMinSequenceLength, "{0}")
 			AddSliderOptionST("MinigameMaxSequenceLengthST", "Max Actions with Escalation", MinigameMaxSequenceLength, "{0}")
-			AddSliderOptionST("MinigameMinKeyHoldTimeST", "Minimum Hold Duration", MinigameMinKeyHoldTime, "{1}")
-			AddSliderOptionST("MinigameMaxKeyHoldTimeST", "Maximum Hold Duration", MinigameMaxKeyHoldTime, "{1}")
-			AddSliderOptionST("MinigameCriticalFailChanceST", "Critical Fail Chance", MinigameCriticalFailChance, "{1}")
-			AddSliderOptionST("MinigameEscalationChanceST", "Escalation Chance", MinigameEscalationChance, "{1}")
+			AddSliderOptionST("MinigameMinKeyHoldTimeST", "Minimum Hold Duration", MinigameMinKeyHoldTime, "{1} s")
+			AddSliderOptionST("MinigameMaxKeyHoldTimeST", "Maximum Hold Duration", MinigameMaxKeyHoldTime, "{1} s")
+			AddSliderOptionST("MinigameCriticalFailChanceST", "Critical Fail Chance", MinigameCriticalFailChance, "{1}%")
+			AddSliderOptionST("MinigameEscalationChanceST", "Escalation Chance", MinigameEscalationChance, "{1}%")
 		EndIf
-	ElseIf page == "Events"
+
+		SetCursorPosition(1)
+
+		AddHeaderOption("Keybinds")
+		AddKeyMapOptionST("FurnKeyST", "Contraption NPC Action Key", FurnitureNPCActionKey)
+
+	ElseIf page == "Events "
 		SetCursorFillMode(LEFT_TO_RIGHT)
 		AddSliderOptionST("EventIntervalST", "Polling Interval", EventInterval, "{2}")		
 		AddSliderOptionST("numNPCsST", "Number of Slotted NPCs", numNpcs, "{1}")
@@ -332,6 +336,7 @@ Event OnPageReset(String page)
 			eventOIDs[i] = AddSliderOption(libs.EventSlots.Slots[i].Name+" Chance", libs.EventSlots.Slots[i].Probability, "{1}")
 			i += 1
 		EndWhile
+
 	ElseIf page == "Device Hider 1"
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		AddMenuOptionST("DeviceHiderST", "Device Hider Slot", SlotMasks[DevicesUnderneathSlot])
@@ -398,8 +403,8 @@ Event OnPageReset(String page)
 		AddToggleOptionST("BlindfoldTooltipST", "Blindfold Tooltips", BlindfoldTooltip)
 		AddToggleOptionST("GagTooltipST", "Gag Tooltips", GagTooltip)
 		AddToggleOptionST("MuffleTooltipST", "Muffling Tooltips", MuffleTooltip)
-		AddHeaderOption("Keybinds")
-		AddKeyMapOptionST("FurnKeyST", "Contraption NPC Action Key", FurnitureNPCActionKey)
+		AddToggleOptionST("ShowMinigameTutorialST", "Show Struggle Minigame Tutorial", ShowMinigameTutorial)
+		AddToggleOptionST("ShowMinigameNotificationsST", "Show Struggle Minigame Notifications", ShowMinigameNotifications)
 
 		SetCursorPosition(1)
 
@@ -667,20 +672,6 @@ State PreserveAggroST
 	EndEvent
 EndState
 
-State ShowMinigameTutorialST
-	Event OnSelectST()
-		ShowMinigameTutorial = !ShowMinigameTutorial
-		SetToggleOptionValueST(ShowMinigameTutorial)
-	EndEvent
-	Event OnDefaultST()
-		ShowMinigameTutorial = True
-		SetToggleOptionValueST(ShowMinigameTutorial)
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("Whether or not tutorial messages are shown at the start of the contraption struggle escape minigame.")
-	EndEvent
-EndState
-
 State ShowMinigameNotificationsST
 	Event OnSelectST()
 		ShowMinigameNotifications = !ShowMinigameNotifications
@@ -692,6 +683,20 @@ State ShowMinigameNotificationsST
 	EndEvent
 	Event OnHighlightST()
 		SetInfoText("Whether or not notification messages are shown for minigame events. Turn off for maximum immersion.")
+	EndEvent
+EndState
+
+State ShowMinigameTutorialST
+	Event OnSelectST()
+		ShowMinigameTutorial = !ShowMinigameTutorial
+		SetToggleOptionValueST(ShowMinigameTutorial)
+	EndEvent
+	Event OnDefaultST()
+		ShowMinigameTutorial = True
+		SetToggleOptionValueST(ShowMinigameTutorial)
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Whether or not tutorial messages are shown at the start of the contraption struggle escape minigame.")
 	EndEvent
 EndState
 
@@ -841,6 +846,152 @@ State HobbleDressSlowST
 	EndEvent
 EndState
 
+State MinigameMinSequenceLengthST
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(MinigameMinSequenceLength)
+		SetSliderDialogDefaultValue(3)
+		SetSliderDialogRange(1, 16)
+		SetSliderDialogInterval(1)
+	EndEvent
+	Event OnSliderAcceptST(Float value)
+		MinigameMinSequenceLength = value as int
+		If MinigameMaxSequenceLength < MinigameMinSequenceLength
+			MinigameMaxSequenceLength = MinigameMinSequenceLength
+			SetSliderOptionValueST(MinigameMaxSequenceLength, "{0}", a_stateName = "MinigameMaxSequenceLengthST")
+		EndIf
+		SetSliderOptionValueST(MinigameMinSequenceLength, "{0}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		MinigameMinSequenceLength = 3
+		SetSliderOptionValueST(MinigameMinSequenceLength, "{0}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("How many key holds in a row the player needs to guess to escape. This is the starting length, escalation can extend the sequence.")
+	EndEvent
+EndState
+
+State MinigameMaxSequenceLengthST
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(MinigameMaxSequenceLength)
+		SetSliderDialogDefaultValue(9)
+		SetSliderDialogRange(1, 16) ; (Don't set the max of the range larger than the array size in the minigame script!)
+		SetSliderDialogInterval(1)
+	EndEvent
+	Event OnSliderAcceptST(Float value)
+		MinigameMaxSequenceLength = value as int
+		If MinigameMaxSequenceLength < MinigameMinSequenceLength
+			MinigameMaxSequenceLength = MinigameMinSequenceLength
+		EndIf
+		SetSliderOptionValueST(MinigameMaxSequenceLength, "{0}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		MinigameMaxSequenceLength = 9
+		SetSliderOptionValueST(MinigameMaxSequenceLength, "{0}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Maximum number of key holds in a row the player will ever need to guess to escape.\nIf escalation is enabled, this value determines how long the sequence can get.")
+	EndEvent
+EndState
+
+State MinigameCriticalFailChanceST
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(MinigameCriticalFailChance)
+		SetSliderDialogDefaultValue(10.0)
+		SetSliderDialogRange(0.0, 100.0)
+		SetSliderDialogInterval(0.1)
+	EndEvent
+	Event OnSliderAcceptST(Float value)
+		MinigameCriticalFailChance = value
+		SetSliderOptionValueST(MinigameCriticalFailChance, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		MinigameCriticalFailChance = 10.0
+		SetSliderOptionValueST(MinigameCriticalFailChance, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Percentage chance that holding the wrong key will completely reset the sequence and generate a new one.")
+	EndEvent
+EndState
+
+State MinigameEscalationChanceST
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(MinigameEscalationChance)
+		SetSliderDialogDefaultValue(10.0)
+		SetSliderDialogRange(0.0, 100.0)
+		SetSliderDialogInterval(0.1)
+	EndEvent
+	Event OnSliderAcceptST(Float value)
+		MinigameEscalationChance = value
+		SetSliderOptionValueST(MinigameEscalationChance, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		MinigameEscalationChance = 10.0
+		SetSliderOptionValueST(MinigameEscalationChance, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Percentage chance that on a critical fail, one more key has to be guessed in the next attempt.")
+	EndEvent
+EndState
+
+State MinigameMinKeyHoldTimeST
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(MinigameMinKeyHoldTime)
+		SetSliderDialogDefaultValue(0.5)
+		SetSliderDialogRange(0.5, 20)
+		SetSliderDialogInterval(0.1)
+	EndEvent
+	Event OnSliderAcceptST(Float value)
+		MinigameMinKeyHoldTime = value
+		If MinigameMaxKeyHoldTime < MinigameMinKeyHoldTime 
+			MinigameMaxKeyHoldTime = MinigameMinKeyHoldTime
+			SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}", a_stateName = "MinigameMaxKeyHoldTimeST")
+		EndIf
+		SetSliderOptionValueST(MinigameMinKeyHoldTime, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		MinigameMinKeyHoldTime = 0.5
+		SetSliderOptionValueST(MinigameMinKeyHoldTime, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Minimum number of seconds any key in the sequence has to be pressed for.")
+	EndEvent
+EndState
+
+State MinigameMaxKeyHoldTimeST
+	Event OnSliderOpenST()
+		SetSliderDialogStartValue(MinigameMaxKeyHoldTime)
+		SetSliderDialogDefaultValue(1.0)
+		SetSliderDialogRange(0.5, 20)
+		SetSliderDialogInterval(0.1)
+	EndEvent
+	Event OnSliderAcceptST(Float value)
+		MinigameMaxKeyHoldTime = value
+		If MinigameMaxKeyHoldTime < MinigameMinKeyHoldTime 
+			MinigameMaxKeyHoldTime = MinigameMinKeyHoldTime
+		EndIf
+		SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		MinigameMaxKeyHoldTime = 1.0
+		SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}")
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Maximum number of seconds any key in the sequence has to be pressed for.")
+	EndEvent
+EndState
+
 State MuffledVolST
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(VolumeMuffled)
@@ -962,152 +1113,6 @@ State PlayerVibVolST
 	EndEvent
 	Event OnHighlightST()
 		SetInfoText("Set how loud the player's vibrators are.\nStronger vibrators are inherently louder than the weaker ones.")
-	EndEvent
-EndState
-
-State MinigameMinSequenceLengthST
-	Event OnSliderOpenST()
-		SetSliderDialogStartValue(MinigameMinSequenceLength)
-		SetSliderDialogDefaultValue(3)
-		SetSliderDialogRange(1, 16)
-		SetSliderDialogInterval(1)
-	EndEvent
-	Event OnSliderAcceptST(Float value)
-		MinigameMinSequenceLength = value as int
-		If MinigameMaxSequenceLength < MinigameMinSequenceLength
-			MinigameMaxSequenceLength = MinigameMinSequenceLength
-			SetSliderOptionValueST(MinigameMaxSequenceLength, "{0}", a_stateName = "MinigameMaxSequenceLengthST")
-		EndIf
-		SetSliderOptionValueST(MinigameMinSequenceLength, "{0}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnDefaultST()
-		MinigameMinSequenceLength = 3
-		SetSliderOptionValueST(MinigameMinSequenceLength, "{0}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("How many key holds in a row the player needs to guess to escape. This is the starting length, escalation can extend the sequence.")
-	EndEvent
-EndState
-
-State MinigameMaxSequenceLengthST
-	Event OnSliderOpenST()
-		SetSliderDialogStartValue(MinigameMaxSequenceLength)
-		SetSliderDialogDefaultValue(9)
-		SetSliderDialogRange(1, 16) ; (Don't set the max of the range larger than the array size in the minigame script!)
-		SetSliderDialogInterval(1)
-	EndEvent
-	Event OnSliderAcceptST(Float value)
-		MinigameMaxSequenceLength = value as int
-		If MinigameMaxSequenceLength < MinigameMinSequenceLength
-			MinigameMaxSequenceLength = MinigameMinSequenceLength
-		EndIf
-		SetSliderOptionValueST(MinigameMaxSequenceLength, "{0}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnDefaultST()
-		MinigameMaxSequenceLength = 9
-		SetSliderOptionValueST(MinigameMaxSequenceLength, "{0}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("Maximum number of key holds in a row the player will ever need to guess to escape.\nIf escalation is enabled, this value determines how long the sequence can get.")
-	EndEvent
-EndState
-
-State MinigameMinKeyHoldTimeST
-	Event OnSliderOpenST()
-		SetSliderDialogStartValue(MinigameMinKeyHoldTime)
-		SetSliderDialogDefaultValue(0.5)
-		SetSliderDialogRange(0.5, 20)
-		SetSliderDialogInterval(0.1)
-	EndEvent
-	Event OnSliderAcceptST(Float value)
-		MinigameMinKeyHoldTime = value
-		If MinigameMaxKeyHoldTime < MinigameMinKeyHoldTime 
-			MinigameMaxKeyHoldTime = MinigameMinKeyHoldTime
-			SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}", a_stateName = "MinigameMaxKeyHoldTimeST")
-		EndIf
-		SetSliderOptionValueST(MinigameMinKeyHoldTime, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnDefaultST()
-		MinigameMinKeyHoldTime = 0.5
-		SetSliderOptionValueST(MinigameMinKeyHoldTime, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("Minimum number of seconds any key in the sequence has to be pressed.")
-	EndEvent
-EndState
-
-State MinigameMaxKeyHoldTimeST
-	Event OnSliderOpenST()
-		SetSliderDialogStartValue(MinigameMaxKeyHoldTime)
-		SetSliderDialogDefaultValue(1.0)
-		SetSliderDialogRange(0.5, 20)
-		SetSliderDialogInterval(0.1)
-	EndEvent
-	Event OnSliderAcceptST(Float value)
-		MinigameMaxKeyHoldTime = value
-		If MinigameMaxKeyHoldTime < MinigameMinKeyHoldTime 
-			MinigameMaxKeyHoldTime = MinigameMinKeyHoldTime
-		EndIf
-		SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnDefaultST()
-		MinigameMaxKeyHoldTime = 1.0
-		SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("Maximum number of seconds any key in the sequence has to be pressed.")
-	EndEvent
-EndState
-
-State MinigameCriticalFailChanceST
-	Event OnSliderOpenST()
-		SetSliderDialogStartValue(MinigameCriticalFailChance)
-		SetSliderDialogDefaultValue(10.0)
-		SetSliderDialogRange(0.0, 100.0)
-		SetSliderDialogInterval(0.1)
-	EndEvent
-	Event OnSliderAcceptST(Float value)
-		MinigameCriticalFailChance = value
-		SetSliderOptionValueST(MinigameCriticalFailChance, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnDefaultST()
-		MinigameCriticalFailChance = 10.0
-		SetSliderOptionValueST(MinigameCriticalFailChance, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("Percentage chance that holding the wrong key will completely reset the sequence and generate a new one.")
-	EndEvent
-EndState
-
-State MinigameEscalationChanceST
-	Event OnSliderOpenST()
-		SetSliderDialogStartValue(MinigameEscalationChance)
-		SetSliderDialogDefaultValue(10.0)
-		SetSliderDialogRange(0.0, 100.0)
-		SetSliderDialogInterval(0.1)
-	EndEvent
-	Event OnSliderAcceptST(Float value)
-		MinigameEscalationChance = value
-		SetSliderOptionValueST(MinigameEscalationChance, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnDefaultST()
-		MinigameEscalationChance = 10.0
-		SetSliderOptionValueST(MinigameEscalationChance, "{1}")
-		ScheduleMinigameOptionsUpdate = True
-	EndEvent
-	Event OnHighlightST()
-		SetInfoText("Percentage chance that on a critical fail, one more key has to be guessed in the next attempt.")
 	EndEvent
 EndState
 
@@ -1503,10 +1508,10 @@ Function ExportSettings()
 	ExportInt("FurnitureNPCActionKey", FurnitureNPCActionKey)
 	ExportInt("HobbleSkirtSpeedDebuff", HobbleSkirtSpeedDebuff)
 	ExportInt("KeyDifficulty", KeyDifficulty)
-	ExportInt("numNpcs", numNpcs)
-	ExportInt("RubberSoundMode", RubberSoundMode)
 	ExportInt("MinigameMinSequenceLength", MinigameMinSequenceLength)
 	ExportInt("MinigameMaxSequenceLength", MinigameMaxSequenceLength)
+	ExportInt("numNpcs", numNpcs)
+	ExportInt("RubberSoundMode", RubberSoundMode)
 
 	;EXPORT BOOL
 	ExportBool("bellyNodeManagement", bellyNodeManagement)
@@ -1523,17 +1528,21 @@ Function ExportSettings()
 	ExportBool("NpcMessages", NpcMessages)
 	ExportBool("PlayerMessages", PlayerMessages)
 	ExportBool("preserveAggro", preserveAggro)
+	ExportBool("ShowMinigameNotifications", ShowMinigameNotifications)
+	ExportBool("ShowMinigameTutorial", ShowMinigameTutorial)
 	ExportBool("useAnimFilter", useAnimFilter)
 	ExportBool("UseBoundCombat", UseBoundCombat)
 	ExportBool("UseBoundCombatPerks", UseBoundCombatPerks)
 	ExportBool("UseItemManipulation", UseItemManipulation)
-	ExportBool("ShowMinigameTutorial", ShowMinigameTutorial)
-	ExportBool("ShowMinigameNotifications", ShowMinigameNotifications)
 
 	;EXPORT FLOAT
 	ExportFloat("BeltRateMult", BeltRateMult)
 	ExportFloat("blindfoldStrength", blindfoldStrength)
 	ExportFloat("EventInterval", EventInterval)
+	ExportFloat("MinigameCriticalFailChance", MinigameCriticalFailChance)
+	ExportFloat("MinigameEscalationChance", MinigameEscalationChance)
+	ExportFloat("MinigameMinKeyHoldTime", MinigameMinKeyHoldTime)
+	ExportFloat("MinigameMaxKeyHoldTime", MinigameMaxKeyHoldTime)
 	ExportFloat("PlugRateMult", PlugRateMult)
 	ExportFloat("VolumeEdged", VolumeEdged)
 	ExportFloat("volumeMuffled", volumeMuffled)
@@ -1541,15 +1550,12 @@ Function ExportSettings()
 	ExportFloat("VolumeOrgasm", VolumeOrgasm)
 	ExportFloat("VolumeVibrator", VolumeVibrator)
 	ExportFloat("VolumeVibratorNPC", VolumeVibratorNPC)
-	ExportFloat("MinigameMinKeyHoldTime", MinigameMinKeyHoldTime)
-	ExportFloat("MinigameMaxKeyHoldTime", MinigameMaxKeyHoldTime)
-	ExportFloat("MinigameCriticalFailChance", MinigameCriticalFailChance)
-	ExportFloat("MinigameEscalationChance", MinigameEscalationChance)
 
 	JsonUtil.Save(File, False)
+	ShowMessage( "Configuration exported successfully.", False )
 EndFunction
 
-function ImportSettings()
+Function ImportSettings()
 	Int version = 0
 	If JsonUtil.GetIntValue(File, "Version", version) != GetVersion()
 		If !ShowMessage("Saved config is for another version of DD, aborting.")
@@ -1579,10 +1585,10 @@ function ImportSettings()
 	FurnitureNPCActionKey = ImportInt("FurnitureNPCActionKey", FurnitureNPCActionKey)
 	HobbleSkirtSpeedDebuff = ImportInt("HobbleSkirtSpeedDebuff", HobbleSkirtSpeedDebuff)
 	KeyDifficulty = ImportInt("KeyDifficulty", KeyDifficulty)
-	numNpcs = ImportInt("numNpcs", numNpcs)
-	RubberSoundMode = ImportInt("RubberSoundMode", RubberSoundMode)
 	MinigameMinSequenceLength = ImportInt("MinigameMinSequenceLength", MinigameMinSequenceLength)
 	MinigameMaxSequenceLength = ImportInt("MinigameMaxSequenceLength", MinigameMaxSequenceLength)
+	numNpcs = ImportInt("numNpcs", numNpcs)
+	RubberSoundMode = ImportInt("RubberSoundMode", RubberSoundMode)
 
 	;IMPORT BOOL
 	bellyNodeManagement = ImportBool("bellyNodeManagement", bellyNodeManagement)
@@ -1599,17 +1605,21 @@ function ImportSettings()
 	NpcMessages = ImportBool("NpcMessages", NpcMessages)
 	PlayerMessages = ImportBool("PlayerMessages", PlayerMessages)
 	preserveAggro = ImportBool("preserveAggro", preserveAggro)
+	ShowMinigameNotifications = ImportBool("ShowMinigameNotifications", ShowMinigameNotifications)
+	ShowMinigameTutorial = ImportBool("ShowMinigameTutorial", ShowMinigameTutorial)
 	useAnimFilter = ImportBool("useAnimFilter", useAnimFilter)
 	UseBoundCombat = ImportBool("UseBoundCombat", UseBoundCombat)
 	UseBoundCombatPerks = ImportBool("UseBoundCombatPerks", UseBoundCombatPerks)
 	UseItemManipulation = ImportBool("UseItemManipulation", UseItemManipulation)
-	ShowMinigameTutorial = ImportBool("ShowMinigameTutorial", ShowMinigameTutorial)
-	ShowMinigameNotifications = ImportBool("ShowMinigameNotifications", ShowMinigameNotifications)
 	
 	;IMPORT FLOAT
 	BeltRateMult = ImportFloat("BeltRateMult", BeltRateMult)
 	blindfoldStrength = ImportFloat("blindfoldStrength", blindfoldStrength)
 	EventInterval = ImportFloat("EventInterval", EventInterval)
+	MinigameCriticalFailChance = ImportFloat("MinigameCriticalFailChance", MinigameCriticalFailChance)
+	MinigameEscalationChance = ImportFloat("MinigameEscalationChance", MinigameEscalationChance)
+	MinigameMinKeyHoldTime = ImportFloat("MinigameMinKeyHoldTime", MinigameMinKeyHoldTime)
+	MinigameMaxKeyHoldTime = ImportFloat("MinigameMaxKeyHoldTime", MinigameMaxKeyHoldTime)
 	PlugRateMult = ImportFloat("PlugRateMult", PlugRateMult)
 	VolumeEdged = ImportFloat("VolumeEdged", VolumeEdged)
 	volumeMuffled = ImportFloat("volumeMuffled", volumeMuffled)
@@ -1617,10 +1627,7 @@ function ImportSettings()
 	VolumeOrgasm = ImportFloat("VolumeOrgasm", VolumeOrgasm)
 	VolumeVibrator = ImportFloat("VolumeVibrator", VolumeVibrator)
 	VolumeVibratorNPC = ImportFloat("VolumeVibratorNPC", VolumeVibratorNPC)
-	MinigameMinKeyHoldTime = ImportFloat("MinigameMinKeyHoldTime", MinigameMinKeyHoldTime)
-	MinigameMaxKeyHoldTime = ImportFloat("MinigameMaxKeyHoldTime", MinigameMaxKeyHoldTime)
-	MinigameCriticalFailChance = ImportFloat("MinigameCriticalFailChance", MinigameCriticalFailChance)
-	MinigameEscalationChance = ImportFloat("MinigameEscalationChance", MinigameEscalationChance)
 
 	ForcePageReset()
+	ShowMessage( "Configuration imported successfully.", False )
 EndFunction
