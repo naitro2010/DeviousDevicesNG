@@ -1046,6 +1046,7 @@ Function Logic(int threadID, bool HasPlayer)
 		Bool permitAnal = True
 		Bool permitBoobs = True
 		Bool noBindings = True
+		Bool noPetsuit = True
 		i = originalActors.Length
 		While i > 0
 			i -= 1
@@ -1054,6 +1055,7 @@ Function Logic(int threadID, bool HasPlayer)
 			PermitBoobs = PermitBoobs && !IsBlockedBreast(originalActors[i])
 			PermitOral = PermitOral && !IsBlockedOral(originalActors[i])
 			noBindings = noBindings && !libs.NeedsBoundAnim(originalActors[i])
+			noPetSuit = noPetSuit && !HasPetSuit(originalActors[i])
 		EndWhile
 		
 		libs.Log("permitAnal = " + permitAnal)
@@ -1063,14 +1065,14 @@ Function Logic(int threadID, bool HasPlayer)
 		libs.Log("noBindings = " + noBindings)
 			
 		;If no actor was restrained in any way we can detect, then don't change the animation.
-		If PermitAnal && PermitVaginal && PermitOral && PermitBoobs && noBindings
+		If PermitAnal && PermitVaginal && PermitOral && PermitBoobs && noBindings && noPetSuit
 			libs.Log("No sex-act-restricted actors present in this sex scene, returning.")
 			Return
 		EndIf
 		
 		;If the animation does not conflict with any worn restraints, then don't change the animation.
 		;inlined the now-deprecated IsValidAnimation function in a reduced form
-		If ( (permitBoobs || !previousAnim.HasTag("Boobjob")) && (permitVaginal || !previousAnim.HasTag("Vaginal")) && (permitAnal || !previousAnim.HasTag("Anal")) && (permitOral || !previousAnim.HasTag("Oral")) && (noBindings || (!libs.playerRef.WornHasKeyword(libs.zad_DeviousPetSuit) && !previousAnim.HasTag("Handjob"))))
+		If ( (permitBoobs || !previousAnim.HasTag("Boobjob")) && (permitVaginal || !previousAnim.HasTag("Vaginal")) && (permitAnal || !previousAnim.HasTag("Anal")) && (permitOral || !previousAnim.HasTag("Oral")) && (noBindings || (noPetSuit && !previousAnim.HasTag("Handjob"))))
 			libs.Log("Original animation " + previousAnim.name + " does not conflict, returning.")
 			Return
 		EndIf
