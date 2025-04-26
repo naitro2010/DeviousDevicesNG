@@ -14,19 +14,28 @@ Function DeviceMenu(Int msgChoice = 0)
             StorageUtil.SetIntValue(libs.playerref, "zad_UntightenToken" + deviceInventory, 1)
             RemoveDevice(libs.playerref)
             Return
-        elseif Utility.RandomFloat(0.0, 99.9) < KeyInsertSuccessfullyChance
-            libs.Notify("With a lot of patience and a little luck you manage to insert the key into the lock and turn it. The bondage mittens fall off your hands.", messagebox = true)
-            DeviceMenuRemoveWithKey()
-        else
-            if Utility.RandomFloat(0.0, 99.9) < KeyLostonFailureChance
-                libs.Notify("You try to insert the key into the lock, but it slips away and falls to the ground. You can't find it anywhere.", messagebox = true)
-                libs.playerref.RemoveItem(devicekey, 1)
-            Else
-                libs.Notify("You try to insert the key into the lock, but it slips away and falls to the ground. Maybe you can pick it up again?", messagebox = true)
-                libs.playerref.DropObject(devicekey, 1)
-            Endif
-            return
-        endif    
+        ElseIf CheckLockAccess() ; Check for cooldown and lock access *before* key drop check.
+            If Utility.RandomFloat(0.0, 99.9) < KeyInsertSuccessfullyChance
+                libs.Notify("With a lot of patience and a little luck you manage to insert the key into the lock and turn it.", messagebox = true)
+                ; Calling CheckLockAccess resets the "tired" unlock cooldown.
+                ; DeviceMenuRemoveWithKey then *also* checks it and will think it's on cooldown...
+                ; As an ugly workaround, we remove the cooldown temporarily, then put it back.
+                ; This can be removed if the core logic in zadEquipScript is ever cleaned up.
+                float cd = UnlockCooldown
+                UnlockCooldown = -1.0
+                DeviceMenuRemoveWithKey() ; <- This can still prevent unlock by e.g. lock shields, wrong key, etc.
+                UnlockCooldown = cd
+            else
+                if Utility.RandomFloat(0.0, 99.9) < KeyLostonFailureChance
+                    libs.Notify("You try to insert the key into the lock, but it slips away and falls to the ground. You can't find it anywhere.", messagebox = true)
+                    libs.playerref.RemoveItem(devicekey, 1)
+                Else
+                    libs.Notify("You try to insert the key into the lock, but it slips away and falls to the ground. Maybe you can pick it up again?", messagebox = true)
+                    libs.playerref.DropObject(devicekey, 1)
+                Endif
+                return
+            EndIf
+        endif
     elseif msgChoice == 2 ; Remove device, without key
         DeviceMenuRemoveWithoutKey()
     endif
