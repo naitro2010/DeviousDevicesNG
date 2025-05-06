@@ -3,11 +3,6 @@ name: Build and Release
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  schedule:
-    - cron: "37 21 * * *"
-    - cron: "37 21 1,16 * *"
   workflow_dispatch:
     inputs:
       releaseNightly:
