@@ -64,10 +64,12 @@ void DeviousDevices::NodeHider::HideArmNodes(RE::Actor* a_actor, HidderState& a_
     {
         if (auto loc_node = Utils::NodeByName(thirdPersonNode, it))
         {
-            if (a_hidden.try_emplace(NodeKey{loc_node->name, false}, loc_node).second)
-            {
-                loc_node->local.scale = 0.002f;
-                LOG("NodeHider::HideArmNodes - Third person node {} hidden",it)
+            if (loc_node != nullptr && loc_node->local.scale >= 0.5f) {
+                if (a_hidden.try_emplace(NodeKey{loc_node->name, false}, loc_node).second)
+                {
+                    loc_node->local.scale = 0.002f;
+                    LOG("NodeHider::HideArmNodes - Third person node {} hidden",it)
+                }
             }
         }
         else ERROR("NodeHider::HideArmNodes - Cant find third person node {}",it)
@@ -76,10 +78,12 @@ void DeviousDevices::NodeHider::HideArmNodes(RE::Actor* a_actor, HidderState& a_
         {
             if (auto loc_node = Utils::NodeByName(firstPersonNode, it))
             {
-                if (a_hidden.try_emplace(NodeKey{loc_node->name, true}, loc_node).second)
-                {
-                    loc_node->local.scale = 0.002f;
-                    LOG("NodeHider::HideArmNodes - First person node {} hidden",it)
+                if (loc_node != nullptr && loc_node->local.scale >= 0.5f) {
+                    if (a_hidden.try_emplace(NodeKey{loc_node->name, true}, loc_node).second)
+                    {
+                        loc_node->local.scale = 0.002f;
+                        LOG("NodeHider::HideArmNodes - First person node {} hidden",it)
+                    }
                 }
             }
             else ERROR("NodeHider::HideArmNodes - Cant find first person node {}",it)
@@ -276,7 +280,7 @@ void DeviousDevices::NodeHider::CleanUnusedActors()
     UniqueLock lock(SaveLock);
 
     std::erase_if(_ActorStates, [=](const auto& it){
-        return (it.second->updateHandle.lastUpdateFrame + 120) < _UpdateCounter;
+        return (it.second->updateHandle.lastUpdateFrame + 600) < _UpdateCounter;
     });
 }
 
