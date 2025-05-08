@@ -113,3 +113,25 @@ Armor Property PonyBootsLongWTE  auto ;White ebonite
 
 ; Front (Fiddle) Yoke
 Armor Property FrontYoke auto
+
+; Open Boxbinder
+Armor Property BoxbinderBLL auto ;Black leather
+Armor Property BoxbinderRDL auto ;Red   leather
+Armor Property BoxbinderWTL auto ;White leather
+Armor Property BoxbinderBLE auto ;Black ebonite
+Armor Property BoxbinderRDE auto ;Red   ebonite
+Armor Property BoxbinderWTE auto ;White ebonite
+
+; Ballet Boots
+Armor Property BalletBootsShortBLL auto ;Black leather
+Armor Property BalletBootsShortRDL auto ;Red   leather
+Armor Property BalletBootsShortWTL auto ;White leather
+Armor Property BalletBootsShortBLE auto ;Black ebonite
+Armor Property BalletBootsShortRDE auto ;Red   ebonite
+Armor Property BalletBootsShortWTE auto ;White ebonite
+Armor Property BalletBootsLongBLL  auto ;Black leather
+Armor Property BalletBootsLongRDL  auto ;Red   leather
+Armor Property BalletBootsLongWTL  auto ;White leather
+Armor Property BalletBootsLongBLE  auto ;Black ebonite
+Armor Property BalletBootsLongRDE  auto ;Red   ebonite
+Armor Property BalletBootsLongWTE  auto ;White ebonite
