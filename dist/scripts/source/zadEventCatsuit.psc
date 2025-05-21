@@ -67,14 +67,14 @@ Function PlayerIsInside()
 	elseif selection == 3
 		libs.NotifyPlayer("The suit settles and slides, caressing your skin.")
 	elseif selection == 4
-		libs.NotifyPlayer("Your muscles strain slightly agains the suit. Every breath makes itself felt.")
+		libs.NotifyPlayer("Your muscles strain slightly against the suit. Every breath makes itself felt.")
 	elseif selection == 5
 		libs.NotifyPlayer("The suit is getting a bit slippery on the inside.")
 	endif
 EndFunction
 
 float Function GetCurrentTimeOfDay()
-	float Time = Utility.GetCurrentGameTime()
+	float Time = libs.GameDaysPassed.GetValue()
 	Time -= Math.Floor(Time) ; Remove "previous in-game days passed" bit
 	Time *= 24 ; Convert from fraction of a day to number of hours
 	Return Time

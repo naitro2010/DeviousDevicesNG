@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef DDNG_FRAMEWORK
+    #include "DeviceReader.h"
+#endif
+
 /*
 * How to get API:
     SKSE::GetMessagingInterface()->RegisterListener([](MessagingInterface::Message* message) 
@@ -32,14 +36,16 @@ namespace DeviousDevicesAPI
     struct DeviceModPrototype
     {
         std::string name;
-        uint8_t group_TES4[32];
-        uint8_t group_ARMO[32];
+        uint8_t     group_TES4[32];
+        uint8_t     group_ARMO[32];
         size_t      size;
         uint8_t*    rawdata = nullptr;
         std::vector<uint8_t[16]> devicerecords;
         std::vector<std::string>   masters;
     };
-    //static_assert(sizeof(DeviceModPrototype) == sizeof(DeviousDevices::DeviceMod));
+#ifdef DDNG_FRAMEWORK
+    static_assert(sizeof(DeviceModPrototype) == sizeof(DeviousDevices::DeviceMod));
+#endif
 
     //Device unit prototype
     struct DeviceUnitPrototype
@@ -77,8 +83,9 @@ namespace DeviousDevicesAPI
         };
         std::vector<HistoryRecord>      history; //history stack
     };
-    //static_assert(sizeof(DeviceUnitPrototype) == sizeof(DeviousDevices::DeviceReader::DeviceUnit));
-
+#ifdef DDNG_FRAMEWORK
+    static_assert(sizeof(DeviceUnitPrototype) == sizeof(DeviousDevices::DeviceReader::DeviceUnit));
+#endif
     enum BondageState : uint32_t
     {
         sNone               = 0x0000,  // Non bondage state
@@ -104,7 +111,7 @@ namespace DeviousDevicesAPI
         virtual const std::map<RE::TESObjectARMO*, DeviceUnitPrototype>& GetDatabase() const;
         virtual RE::TESObjectARMO*  GetDeviceRender(RE::TESObjectARMO* a_invdevice) const;
         virtual RE::TESObjectARMO*  GetDeviceInventory(RE::TESObjectARMO* a_renddevice) const;
-        virtual RE::TESForm*        GetPropertyForm(RE::TESObjectARMO* a_invdevice, std::string a_propertyname, RE::TESForm* a_defvalue, int a_mode) const ;
+        virtual RE::TESForm*        GetPropertyForm(RE::TESObjectARMO* a_invdevice, std::string a_propertyname, RE::TESForm* a_defvalue, int a_mode) const;
         virtual int                 GetPropertyInt(RE::TESObjectARMO* a_invdevice, std::string a_propertyname, int a_defvalue, int a_mode) const;
         virtual float               GetPropertyFloat(RE::TESObjectARMO* a_invdevice, std::string a_propertyname, float a_defvalue, int a_mode) const;
         virtual bool                GetPropertyBool(RE::TESObjectARMO* a_invdevice, std::string a_propertyname, bool a_defvalue, int a_mode) const;

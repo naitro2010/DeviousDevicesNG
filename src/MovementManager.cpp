@@ -18,15 +18,18 @@ void DeviousDevices::MovementManager::Update()
     static auto loc_disablecombatkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asDisableCombatKeywords",false);
     
     _PlayerDisableDraw = false;
-    for (auto&& it :loc_disablecombatkwds)
+    if (LibFunctions::GetSingleton()->WornHasKeyword(RE::PlayerCharacter::GetSingleton(),"zad_DeviousHeavyBondage"))
     {
-        if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
+        for (auto&& it :loc_disablecombatkwds)
         {
-            _PlayerDisableDraw = true;
-            break;
+            if (LibFunctions::GetSingleton()->WornHasKeywordAll(RE::PlayerCharacter::GetSingleton(),it))
+            {
+                _PlayerDisableDraw = true;
+                break;
+            }
         }
     }
-    
+
     static auto loc_forcewalkkwds = ConfigManager::GetSingleton()->GetArrayText("Movement.asForceWalkKeywords",false);
     
     _PlayerForceWalk = false;
@@ -55,6 +58,7 @@ void DeviousDevices::MovementManager::ManageAutoMove(RE::PlayerControls* a_pc)
 void DeviousDevices::MovementManager::ManagePlayerInput(RE::PlayerControlsData* a_data)
 {
     static const auto loc_camera = RE::PlayerCamera::GetSingleton();
+    static const auto loc_player = RE::PlayerCharacter::GetSingleton();
     if (_PlayerForceWalk && (!loc_camera || !loc_camera->IsInFreeCameraMode()))
     {
         static const float loc_maxspeed = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSpeedMult",0.15f);
@@ -62,8 +66,18 @@ void DeviousDevices::MovementManager::ManagePlayerInput(RE::PlayerControlsData* 
         // Truncate vector
         if (loc_amp > loc_maxspeed)
         {
-            a_data->moveInputVec.x = (a_data->moveInputVec.x/loc_amp)*loc_maxspeed;
-            a_data->moveInputVec.y = (a_data->moveInputVec.y/loc_amp)*loc_maxspeed;
+            if (loc_player->AsActorState()->IsSprinting())
+            {
+                static const float loc_maxspeedsprint = ConfigManager::GetSingleton()->GetVariable<float>("Movement.afMaxSprintSpeedMult",0.4f);
+                a_data->moveInputVec.x = (a_data->moveInputVec.x/loc_amp)*loc_maxspeedsprint;
+                a_data->moveInputVec.y = (a_data->moveInputVec.y/loc_amp)*loc_maxspeedsprint;
+            }
+            else
+            {
+                a_data->moveInputVec.x = (a_data->moveInputVec.x/loc_amp)*loc_maxspeed;
+                a_data->moveInputVec.y = (a_data->moveInputVec.y/loc_amp)*loc_maxspeed;
+            }
+
         }
     }
 }
@@ -71,4 +85,13 @@ void DeviousDevices::MovementManager::ManagePlayerInput(RE::PlayerControlsData* 
 bool DeviousDevices::MovementManager::ManageWeapons(RE::Actor* a_actor)
 {
     return _PlayerDisableDraw;
+}
+
+bool DeviousDevices::MovementManager::ManageSprint(RE::Actor* a_actor, bool a_prevres)
+{
+    if (a_actor->IsPlayerRef() && _PlayerForceWalk)
+    {
+        a_prevres = true;
+    }
+    return a_prevres;
 }

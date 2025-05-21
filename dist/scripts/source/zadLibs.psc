@@ -33,7 +33,7 @@ zadBoundCombatScript Property BoundCombat auto
 Int Property TweenMenuKey Auto
 bool Property Terminate Auto
 zadexpressionlibs Property ExpLibs auto ;expression libs
-vrikActions Property _vrikActions = None Auto
+Quest Property vrikActionsAPI = None Auto
   
 ; Keywords
 Keyword Property zad_DeviousPlug Auto
@@ -283,6 +283,15 @@ Keyword Property questItemRemovalAuthorizationToken = None Auto
 FormList Property zadDeviceTypes Auto	; List of all main device type keywords. Useful for iterating functions.
 FormList Property zad_AlwaysSilent Auto	; Actors in this list will ALWAYS equip or unequip DD items silently.
 
+GlobalVariable _GameDaysPassed
+GlobalVariable Property GameDaysPassed
+    GlobalVariable Function Get()
+        if !_GameDaysPassed
+            _GameDaysPassed = Game.GetForm(0x00000039) as GlobalVariable
+        endif
+        return _GameDaysPassed
+    EndFunction
+EndProperty
 
 ; Rechargeable Soulgem Stuff
 Soulgem Property SoulgemEmpty Auto
@@ -672,7 +681,7 @@ Armor Function GetWornRenderedDeviceByKeyword(Actor a, Keyword kw)
 		return None
 	EndIf
 	Armor x = a.GetWornForm(i) As Armor 
-	if x && x.HasKeyWord(zad_Lockable)
+	if x && (x.HasKeyWord(zad_Lockable) || x.HasKeyWord(zad_DeviousPlug))
 		return x
 	EndIf
 	return none
@@ -838,7 +847,7 @@ Function InflateAnalPlug(actor akActor, int amount = 1)
 			log("Setting anal plug inflation to " + (currentVal))
 			zadInflatablePlugStateAnal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentAnal = Utility.GetCurrentGameTime()
+		LastInflationAdjustmentAnal = GameDaysPassed.GetValue()
 	EndIf
 	SendInflationEvent(akActor, False, True, currentval)
 	Aroused.UpdateActorExposure(akActor, 15)
@@ -880,7 +889,7 @@ Function InflateVaginalPlug(actor akActor, int amount = 1)
 			log("Setting vaginal plug inflation to " + (currentVal))
 			zadInflatablePlugStateVaginal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentVaginal = Utility.GetCurrentGameTime()
+		LastInflationAdjustmentVaginal = GameDaysPassed.GetValue()
 	EndIf
 	SendInflationEvent(akActor, True, True, currentval)
 	Aroused.UpdateActorExposure(akActor, 15)
@@ -941,7 +950,7 @@ Function DeflateVaginalPlug(actor akActor, int amount = 1)
 			log("Setting vaginal plug inflation to " + (currentVal))
 			zadInflatablePlugStateVaginal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentVaginal = Utility.GetCurrentGameTime()	
+		LastInflationAdjustmentVaginal = GameDaysPassed.GetValue()	
 	EndIf
 	SendInflationEvent(akActor, True, False, currentval)
 EndFunction
@@ -962,7 +971,7 @@ Function DeflateAnalPlug(actor akActor, int amount = 1)
 			log("Setting anal plug inflation to " + (currentVal))
 			zadInflatablePlugStateAnal.SetValueInt(currentVal)
 		EndIf	
-		LastInflationAdjustmentAnal = Utility.GetCurrentGameTime()	
+		LastInflationAdjustmentAnal = GameDaysPassed.GetValue()	
 	EndIf
 	SendInflationEvent(akActor, False, False, currentval)
 EndFunction
@@ -1346,7 +1355,7 @@ Function UpdateExposure(actor akRef, float val, bool skipMultiplier=false)
 			Aroused.SetActorExposure(akRef, (newVal + 1) as int)
 		else 														
 			StorageUtil.SetFloatValue(akRef, "SLAroused.ActorExposure", newVal)
-			StorageUtil.SetFloatValue(akRef, "SLAroused.ActorExposureDate", Utility.GetCurrentGameTime())
+			StorageUtil.SetFloatValue(akRef, "SLAroused.ActorExposureDate", GameDaysPassed.GetValue())
 		endif
 		
 	Else
@@ -2472,12 +2481,12 @@ Function UnPlugPanelGag(actor akActor)
 EndFunction
 
 
-bool Function IsBound(actor akActor)
-	return akActor.WornHasKeyword(zad_DeviousHeavyBondage) || (akActor.WornHasKeyword(zad_DeviousArmbinder) || akActor.WornHasKeyword(zad_DeviousArmBinderElbow) || akActor.WornHasKeyword(zad_DeviousYoke) || akActor.WornHasKeyword(zad_DeviousYokeBB) || akActor.WornHasKeyword(zad_DeviousStraitJacket))
+Bool Function IsBound(Actor akActor)
+	Return akActor.WornHasKeyword(zad_DeviousHeavyBondage) || akActor.WornHasKeyword(zad_DeviousArmbinder) || akActor.WornHasKeyword(zad_DeviousArmBinderElbow) || akActor.WornHasKeyword(zad_DeviousYoke) || akActor.WornHasKeyword(zad_DeviousYokeBB) || akActor.WornHasKeyword(zad_DeviousStraitJacket)
 EndFunction
 
-bool Function NeedsBoundAnim(actor akActor)
-	return akActor.WornHasKeyword(zad_DeviousCuffsFront) || akActor.WornHasKeyword(zad_DeviousElbowTie) || (akActor.WornHasKeyword(zad_DeviousArmbinder) || akActor.WornHasKeyword(zad_DeviousArmBinderElbow) || akActor.WornHasKeyword(zad_DeviousYoke) || akActor.WornHasKeyword(zad_DeviousYokeBB) || akActor.WornHasKeyword(zad_DeviousPetSuit))
+Bool Function NeedsBoundAnim(Actor akActor)
+	Return akActor.WornHasKeyword(zad_DeviousCuffsFront) || akActor.WornHasKeyword(zad_DeviousElbowTie) || akActor.WornHasKeyword(zad_DeviousArmbinder) || akActor.WornHasKeyword(zad_DeviousArmBinderElbow) || akActor.WornHasKeyword(zad_DeviousYoke) || akActor.WornHasKeyword(zad_DeviousYokeBB) || akActor.WornHasKeyword(zad_DeviousPetSuit)
 EndFunction
 
 Function ToggleCompass(bool show)
@@ -2519,29 +2528,11 @@ Form Function GetRenderedDeviceInstance(actor akActor, int Slot, Keyword kwd)
 	return none
 EndFunction
 
+
+;DEPRECATED IN ITS ORIGINAL FORM, SIMPLIED AND KEPT IN PLACE FOR BEING A LIBRARY FUNCTION
+;inlined at places it's used in DD
 Form Function GetWornHeavyBondageInstance(actor akActor)
-	; akActor.GetWornForm(0x20000000)
-	; 0x00010000 is slot 46, the new "Heavy Bondage" slot.
-	form armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousArmbinder)
-	if !armb ; Check for yokes
-		armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousYoke)
-	EndIf
-	if !armb ; Check for straitjackets
-		armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousStraitJacket)
-	EndIf
-	if !armb ; Check for elbowbinders
-		armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousArmbinderElbow)
-	EndIf
-	if !armb ; Check for breastyokes
-		armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousYokeBB)
-	EndIf
-	if !armb ; Check for frontcuffs
-		armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousCuffsFront)
-	EndIf
-	if !armb ; Check for elbowshackles
-		armb = GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousElbowTie)
-	EndIf
-	return armb
+	Return GetRenderedDeviceInstance(akActor, 0x00010000, zad_DeviousHeavyBondage)
 EndFunction
 
 
@@ -2934,20 +2925,21 @@ Event OnUpdate()
 		RegisterForSingleUpdate(20.0)
 		Return
 	EndIf
-	If Config.debugFixDevices
-		Config.debugFixDevices = false
-		DDI_DebugFixDevices()
-		; let's delay the next update, to make sure the debug has ample time to complete
-		RegisterForSingleUpdate(20.0)
-		Return
-	EndIf
-	If Config.RegisterDevices
-		Config.RegisterDevices = false
-		SendModEvent("DDI_RegisterDevices")
-		; let's delay the next update, to make sure the command has ample time to complete
-		RegisterForSingleUpdate(20.0)
-		Return
-	EndIf
+	;DEPRECATED
+	;If Config.debugFixDevices
+	;	Config.debugFixDevices = false
+	;	DDI_DebugFixDevices()
+	;	; let's delay the next update, to make sure the debug has ample time to complete
+	;	RegisterForSingleUpdate(20.0)
+	;	Return
+	;EndIf
+	;If Config.RegisterDevices
+	;	Config.RegisterDevices = false
+	;	SendModEvent("DDI_RegisterDevices")
+	;	; let's delay the next update, to make sure the command has ample time to complete
+	;	RegisterForSingleUpdate(20.0)
+	;	Return
+	;EndIf
 	if  (Game.IsMenuControlsEnabled() || Game.IsFightingControlsEnabled())
 		if !IsAnimating(PlayerRef)
 			UpdateControls()
@@ -3415,17 +3407,13 @@ EndFunction
 
 function enableVA()
   if EnableVRSupport
-    _vrikActions.VAC_allTime = True
-    _vrikActions.VAC_HandMode = 0
-    _vrikActions.VAC_noMove_HandMode = 0
-    _vrikActions.VAC_noControl_HandMode = 0
-    _vrikActions.EnableVA()
+	zadInterfaceVRIK.EnableVR(vrikActionsAPI)
   EndIf
 EndFunction
 
 function disableVA()
   if EnableVRSupport
-    _vrikActions.VAC_allTime = False
+	zadInterfaceVRIK.DisableVR(vrikActionsAPI)
   EndIf
   ; vrikActions.DisableVA()
 EndFunction

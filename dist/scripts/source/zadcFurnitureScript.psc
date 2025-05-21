@@ -11,13 +11,14 @@ Need to make sure in DDI that NPCs can't unlock/equip invalid devices. Best to f
 
 zadclibs Property clib Auto
 zadlibs Property libs Auto
+zadcNGEscapeMinigame Property zadcNGEscapeMinigameQuest Auto
 
 String Property DeviceName = "" Auto					; Device name for use in messageboxes etc.
 Bool Property ForceStripActor = True Auto				; If enabled, the actor will be automatically stripped naked when put in the device. Their outfit will be restored upon leaving.
 Bool Property ScriptedDevice = False Auto				; If enabled, the device cannot be interacted with via dialogue. Activating the device via a package will still work for NPCs. Useful for devices that need to be used in scenes.
 Package[] Property BoundPose Auto						; Packages containing the actual poses
 Package[] Property StrugglePose Auto					; Packages containing the struggle poses
-Bool Property SendDeviceModEvents = False Auto			; If enabled, the device will send mod events when an actor is getting locked or unlocked by this device.
+Bool Property SendDeviceModEvents = True Auto			; If enabled, the device will send mod events when an actor is getting locked or unlocked by this device.
 ObjectReference[] Property LinkedDevices Auto			; With this list, groups of linked furniture devices can be defined. The interpretation of the values is up to the mod setting them up. The list can e.g. be used to identify closeby devices to lock up followers etc.
 Bool Property CanBePickedUp = False Auto				; If set to true, this device can be picked up by the player (a build kit will be placed in her inventory and the device is removed from the world)
 MiscObject Property Blueprint Auto						; For pickable devices, this build kit will be created upon picking up the device.
@@ -172,7 +173,7 @@ Function RemoveEffects(Actor akActor)
 EndFunction
 
 Function SetLockShield()
-	LockShieldStartedAt = Utility.GetCurrentGameTime()
+	LockShieldStartedAt = libs.GameDaysPassed.GetValue()
 	If (LockShieldTimerMin > 0.0) && (LockShieldTimerMin <= LockShieldTimerMax)
 		LockShieldTimer = ((Utility.RandomFloat(LockShieldTimerMin, LockShieldTimerMax)) * CalculateCooldownModifier(False))
 	Else
@@ -185,7 +186,7 @@ Bool Function CheckLockShield()
 		return True
 	EndIf
 	Float HoursNeeded = LockShieldTimer
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LockShieldStartedAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LockShieldStartedAt) * 24.0
 	if HoursPassed > HoursNeeded
 		return True
 	Else		
@@ -200,7 +201,7 @@ Function CheckSelfBondageRelease()
 		return 
 	EndIf
 	Float HoursNeeded = SelfBondageReleaseTimer
-	Float HoursPassed = (Utility.GetCurrentGameTime() - ReleaseTimerStartedAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - ReleaseTimerStartedAt) * 24.0
 	if HoursPassed > HoursNeeded
 		if user == libs.PlayerRef
 			libs.notify("The timed lock clicks open and frees you from the device!", messageBox = true)
@@ -324,8 +325,8 @@ Function LockActor(actor act)
 	EndIf			
 	clib.StoreDevice(user, self)
 	SetLockShield()	
-	DeviceEquippedAt = Utility.GetCurrentGameTime()
-	ReleaseTimerStartedAt = Utility.GetCurrentGameTime()
+	DeviceEquippedAt = libs.GameDaysPassed.GetValue()
+	ReleaseTimerStartedAt = DeviceEquippedAt
 	If ForceTimer
 		isSelfBondage = True
 	EndIf
@@ -361,7 +362,10 @@ Function UnlockActor()
 		If user == Game.GetPlayer()			
 			Game.SetPlayerAIDriven(False)
 			Game.EnablePlayerControls()	
-			user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)			
+			user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)
+			if zadcNGEscapeMinigameQuest.IsRunning()
+				zadcNGEscapeMinigameQuest.Stop()
+			EndIf
 		Else
 			user.SetDontMove(False)	
 			user.SetHeadTracking(True)
@@ -415,9 +419,9 @@ EndEvent
 Bool Function CanMakeUnlockAttempt()
 	; check if the character can make an unlock attempt.
 	Float HoursNeeded = (UnlockCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastUnlockAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastUnlockAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastUnlockAttemptAt = Utility.GetCurrentGameTime()
+		LastUnlockAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -757,7 +761,7 @@ Bool Function PasserbyAction()
 	If !AllowPasserbyAction || !User.Is3DLoaded() || User.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(user)
 		return false
 	EndIf	
-	If ((Utility.GetCurrentGameTime() - LastPasserbyEventAt) * 24) < PasserbyCooldown
+	If ((libs.GameDaysPassed.GetValue() - LastPasserbyEventAt) * 24) < PasserbyCooldown
 		return false
 	EndIf	
 	if SexAnimations.Length == 0 || !clib.GetIsFemale(User)
@@ -802,9 +806,13 @@ Event OnUpdate()
 		if StruggleTick > 1
 			StruggleTick = 0
 		EndIf	
-		RegisterForSingleUpdate(Utility.RandomInt(20,40))	
+		RegisterForSingleUpdate(Utility.RandomInt(20,40))
+		; Don't run random struggle while passerby action is running.
 		If !PasserbyAction() && StruggleTick == 0
-			StruggleScene(user)
+			; Don't run random struggle if user is already doing struggle minigame (player only).
+			If user != libs.PlayerRef || !zadcNGEscapeMinigameQuest.IsRunning() || zadcNGEscapeMinigameQuest.IsSuspended()
+				StruggleScene(user)
+			EndIf
 		EndIf
 		if !clib.IsAnimating(user)
 			; to make up for not checking here, we do when a scene ends.
@@ -830,7 +838,7 @@ Event OnDDCSLEnd(int tid, bool hasPlayer)
 	if !Userfound
 		return
 	endif
-	LastPasserbyEventAt = Utility.GetCurrentGameTime()
+	LastPasserbyEventAt = libs.GameDaysPassed.GetValue()
 	UnRegisterForModEvent("AnimationEnd")
 	User.SetDoingFavor(False)
     If User == libs.PlayerRef
@@ -951,10 +959,11 @@ EndFunction
 
 ; ESCAPE SYSTEM
 
-Function EscapeAttempt()		
-	Int EscapeOption = zadc_EscapeDeviceMSG.show()	
+Function EscapeAttempt()
+	Int EscapeOption = zadc_EscapeDeviceMSG.show()
 	If EscapeOption == 0 ; Struggle
-		EscapeAttemptStruggle()
+		EscapeAttemptMinigame()
+		;EscapeAttemptStruggle()
 	Elseif EscapeOption == 1 ; Pick Lock
 		EscapeAttemptLockPick()
 	Elseif EscapeOption == 2 ; Break Device
@@ -984,7 +993,7 @@ Function StruggleScene(actor akActor)
 	; set a mutex in case the scene gets called while it's still running
 	If strugglemutex || !akActor.Is3DLoaded() || akActor.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(akActor)
 		return
-	EndIf		
+	EndIf
 	strugglemutex = true	
 	CurrentStruggle	= PickRandomStruggle()		
 	If !CurrentStruggle
@@ -1118,9 +1127,9 @@ EndFunction
 Bool Function CanMakeStruggleEscapeAttempt()
 	; right now we allow escape attempts regardless of which DD devices are worn
 	Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastStruggleEscapeAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastStruggleEscapeAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastStruggleEscapeAttemptAt = Utility.GetCurrentGameTime()
+		LastStruggleEscapeAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1138,9 +1147,9 @@ EndFunction
 Bool Function CanMakeBreakEscapeAttempt()	
 	; right now we allow escape attempts regardless of which DD devices are worn
 	Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastBreakEscapeAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastBreakEscapeAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastBreakEscapeAttemptAt = Utility.GetCurrentGameTime()
+		LastBreakEscapeAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1158,9 +1167,9 @@ EndFunction
 Bool Function CanMakeLockPickEscapeAttempt()	
 	; right now we allow escape attempts regardless of which DD devices are worn
 	Float HoursNeeded = (EscapeCooldown * CalculateCooldownModifier(False))
-	Float HoursPassed = (Utility.GetCurrentGameTime() - LastLockPickEscapeAttemptAt) * 24.0
+	Float HoursPassed = (libs.GameDaysPassed.GetValue() - LastLockPickEscapeAttemptAt) * 24.0
 	if HoursPassed > HoursNeeded
-		LastLockPickEscapeAttemptAt = Utility.GetCurrentGameTime()
+		LastLockPickEscapeAttemptAt = libs.GameDaysPassed.GetValue()
 		return True
 	Else
 		Int HoursToWait = Math.Ceiling(HoursNeeded - HoursPassed)
@@ -1218,6 +1227,14 @@ Function SelfBondageReward()
 		user.AddItem(Reward[i], 1, False)
 	EndWhile
 	Utility.Wait(1)
+EndFunction
+
+Function EscapeAttemptMinigame()
+	if !zadcNGEscapeMinigameQuest.IsRunning()
+		zadcNGEscapeMinigameQuest.Start()
+	ElseIf zadcNGEscapeMinigameQuest.IsSuspended()
+		zadcNGEscapeMinigameQuest.ResumeMinigame()
+	EndIf
 EndFunction
 
 Function EscapeAttemptStruggle()
@@ -1287,10 +1304,16 @@ Float Function CalclulateStruggleSuccess()
 	return result
 EndFunction
 
-Function EscapeAttemptBreak()			
+Function EscapeAttemptBreak()
 	If !CanMakeBreakEscapeAttempt()
 		return
-	EndIf		
+	EndIf
+
+	; Suspend the minigame while lockpick escape runs. It'll resume next time player picks "struggle".
+	if zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
+		zadcNGEscapeMinigameQuest.SuspendMinigame()
+	EndIf
+
 	zadc_EscapeBreakMSG.Show()		
 	If Escape(CalclulateBreakSuccess())		
 		zadc_EscapeBreakSuccessMSG.Show()	
@@ -1347,23 +1370,29 @@ Float Function CalclulateBreakSuccess()
 	return result
 EndFunction
 
-Function EscapeAttemptLockPick()	
+Function EscapeAttemptLockPick()
 	If !HasValidLockPick()
 		libs.notify("You do not possess a pick you could use on the " + DeviceName + ".", messageBox = true)
 		return
 	EndIf	
 	If !CanMakeLockPickEscapeAttempt()
 		return
-	EndIf	
-	zadc_EscapeLockPickMSG.Show()	
+	EndIf
+	zadc_EscapeLockPickMSG.Show()
 	; first make a check against lock difficulty as you can't pick what you can't reach! The cooldown timer has already reset at this point.
 	If Utility.RandomFloat(0.0, 99.9) < LockAccessDifficulty && User == libs.PlayerRef
 		libs.notify("You fail to reach your " + DeviceName + "'s locks and can't attempt to pick the lock.", messageBox = true)		
 		return
-	EndIf	
-	If Escape(CalclulateLockPickSuccess())		
-		zadc_EscapeLockPickSuccessMSG.Show()	
-		SelfBondageReward()		
+	EndIf
+
+	; Suspend the minigame while lockpick escape runs. It'll resume next time player picks "struggle".
+	if zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
+		zadcNGEscapeMinigameQuest.SuspendMinigame()
+	EndIf
+
+	If Escape(CalclulateLockPickSuccess())
+		zadc_EscapeLockPickSuccessMSG.Show()
+		SelfBondageReward()
 		UnlockActor()
 	Else
 		; catastrophic failure will prevent further escape attempts
@@ -1375,7 +1404,7 @@ Function EscapeAttemptLockPick()
 			EscapeLockPickAttemptsMade += 1
 			; destroy the lockpick
 			DestroyLockPick()			
-			zadc_EscapeLockPickFailureMSG.Show()			
+			zadc_EscapeLockPickFailureMSG.Show()
 		Endif
 	EndIf
 EndFunction

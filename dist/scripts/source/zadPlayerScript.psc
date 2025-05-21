@@ -29,7 +29,13 @@ Event OnAnimationStart(string eventName, string argString, float argNum, form se
     int actor_count = SceneActors.length
     while i < actor_count
         if SceneActors[i].WornHasKeyword(libs.zad_DeviousGag)
-            controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceBySlot(voiceslots[SceneActors[i].GetActorBase().GetSex()]))
+			If SKSE.GetPluginVersion("SexLabUtil") >= 34340864 && SceneActors[i].GetActorBase().GetSex() == 1 ;p+ fix
+				controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceByTags("Female,Gagged", "", True))
+			ElseIf SKSE.GetPluginVersion("SexLabUtil") >= 34340864 && SceneActors[i].GetActorBase().GetSex() == 0 ;p+ fix
+				controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceByTags("Male,Gagged", "", True))
+			else ;regular SL way of switching voices
+				controller.SetVoice(SceneActors[i], libs.SexLab.GetVoiceBySlot(voiceslots[SceneActors[i].GetActorBase().GetSex()]))
+			endif
             libs.log(SceneActors[i].GetLeveledActorBase().GetName() + " is gagged. Voice changed.")
         else
             libs.log(SceneActors[i].GetLeveledActorBase().GetName() + " is not gagged.")
@@ -99,10 +105,6 @@ Function CheckForSoftDepends()
 
 	If Game.IsPluginInstalled("DD_Animation_Overhaul_by_Taki17.esp")
 		libs.Error("DDNG: 'DD_Animation_Overhaul_by_Taki17' ESP is active. This ESP is from and old version and no longer required will cause issues. Remove the ESP from your mod manager.")
-	EndIf
-
-	If Game.IsPluginInstalled("Devious Devices SE patch.esp")
-		libs.Error("DDNG: 'Devious Devices SE patch' ESP is active. This ESP is no longer required and will cause issues. Disable the ESP in your loadorder or remove it.")
 	EndIf
 EndFunction
  

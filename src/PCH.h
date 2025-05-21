@@ -138,6 +138,8 @@
 //print message to console
 #define CLOG(...) {if(RE::ConsoleLog::GetSingleton() != nullptr) RE::ConsoleLog::GetSingleton()->Print((std::string("[DDNG] ") + std::format(__VA_ARGS__)).c_str());} 
 
+#define DDNG_FRAMEWORK
+
 using namespace std::literals;
 using namespace REL::literals;
 
