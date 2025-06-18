@@ -815,7 +815,7 @@ Event OnUpdate()
 				StruggleScene(user)
 			EndIf
 		EndIf
-		if !clib.IsAnimating(user)
+		if user && !clib.IsAnimating(user)
 			; to make up for not checking here, we do when a scene ends.
 			CheckSelfBondageRelease()		
 		EndIf
