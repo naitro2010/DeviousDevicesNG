@@ -126,6 +126,7 @@ Float Property ReleaseTimerStartedAt = 0.0 Auto Hidden	; When was this device eq
 bool isLockManipulated = false							; Indicates if the lock has been manipulated, allowing instant escape.
 Bool Mutex = False										; Mutex for the Activator
 Bool StruggleMutex = False								; Mutex for the struggle scene
+Bool UnlockMutex = False								; Mutex for unlock. Used to prevent package add/remove race conditions
 int lasthourdisplayed									; Variable to store the remaining hours until the timer opens the devices. Used to curb spamming of the "This device will unlock in x hours" message.
 Package CurrentPose										; Stores the current bound pose
 ;Float OldScale	= 1.0									; Stores the original scale of the actor in case the code needs to scale her.
@@ -352,43 +353,43 @@ Function LockActor(actor act)
 EndFunction
 
 Function UnlockActor()
-	if user
-		self.enable()
-		UnregisterForUpdate()
-		UnregisterForAllKeys()	
-		user.StopTranslation()
-		ActorUtil.RemovePackageOverride(user, CurrentPose)		
-		Debug.SendAnimationEvent(User, "IdleForceDefaultState")				
-		If user == Game.GetPlayer()			
-			Game.SetPlayerAIDriven(False)
-			Game.EnablePlayerControls()	
-			user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)
-			if zadcNGEscapeMinigameQuest.IsRunning()
-				zadcNGEscapeMinigameQuest.Stop()
-			EndIf
-		Else
-			user.SetDontMove(False)	
-			user.SetHeadTracking(True)
-			user.SetRestrained(False)			
-		EndIf			
-		Utility.Wait(0.2)
-		user.moveto(user)		
-		user.SetPosition(PosX, PosY, PosZ)
-		RemoveEffects(user)
-		clib.ResetNiOverrideOverride(user)
-		RemoveDevices(user)
-		;If ForceStripActor			
-		;	clib.RestoreOutfit(user)
-		;EndIf
-		clib.RestoreBondage(user)
-		User.EvaluatePackage()
-		If SendDeviceModEvents
-			SendDeviceEvent(False)
+	if !user ; Nobody to unlock.
+		Return
+	endif
+	UnlockMutex = True
+	self.enable()
+	UnregisterForUpdate()
+	UnregisterForAllKeys()	
+	user.StopTranslation()
+	ActorUtil.RemovePackageOverride(user, CurrentStruggle)
+	ActorUtil.RemovePackageOverride(user, CurrentPose)		
+	Debug.SendAnimationEvent(User, "IdleForceDefaultState")				
+	If user == Game.GetPlayer()			
+		Game.SetPlayerAIDriven(False)
+		Game.EnablePlayerControls()	
+		user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)
+		if zadcNGEscapeMinigameQuest.IsRunning()
+			zadcNGEscapeMinigameQuest.Stop()
 		EndIf
 	Else
-		; something went wrong - insert error handling here
-		return
-	EndIf	
+		user.SetDontMove(False)	
+		user.SetHeadTracking(True)
+		user.SetRestrained(False)			
+	EndIf			
+	Utility.Wait(0.2)
+	user.moveto(user)		
+	user.SetPosition(PosX, PosY, PosZ)
+	RemoveEffects(user)
+	clib.ResetNiOverrideOverride(user)
+	RemoveDevices(user)
+	;If ForceStripActor			
+	;	clib.RestoreOutfit(user)
+	;EndIf
+	clib.RestoreBondage(user)
+	User.EvaluatePackage()
+	If SendDeviceModEvents
+		SendDeviceEvent(False)
+	EndIf
 	clib.ClearDevice(user)
 	;If OldScale != 1.0		
 	;	user.SetScale(OldScale)
@@ -405,6 +406,7 @@ Function UnlockActor()
 		LockPickEscapeChance = OriginalLockPickEscapeChance
 		BreakDeviceEscapeChance = OriginalBreakEscapeChance
 	EndIf	
+	UnlockMutex = False
 EndFunction
 
 Event OnKeyDown(Int KeyCode)	
@@ -800,8 +802,7 @@ EndFunction
 
 Int StruggleTick = 0
 Event OnUpdate()
-	if user
-	;prevent race condition when this function gets called whilst in or starting the UnlockActor function
+	if user && !UnlockMutex ;prevent race condition when this function gets called whilst in or starting the UnlockActor function
 		StruggleTick += 1
 		if StruggleTick > 1
 			StruggleTick = 0
@@ -991,7 +992,7 @@ EndFunction
 Package CurrentStruggle
 Function StruggleScene(actor akActor)	
 	; set a mutex in case the scene gets called while it's still running
-	If strugglemutex || !akActor.Is3DLoaded() || akActor.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(akActor)
+	If strugglemutex || UnlockMutex || !akActor.Is3DLoaded() || akActor.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(akActor)
 		return
 	EndIf
 	strugglemutex = true	
@@ -1015,7 +1016,7 @@ Function StruggleScene(actor akActor)
 	libs.SexlabMoan(akActor)
 	Utility.Wait(2)
 	ActorUtil.RemovePackageOverride(akActor, CurrentStruggle)
-	If akActor == user ; User is still in contraption after running the above code and did not get unlocked
+	If akActor == user && !UnlockMutex ; I.e. user did not get unlocked during struggle, and is not currently being unlocked
 		ActorUtil.AddPackageOverride(akActor, CurrentPose, 99)
 	EndIf
 	akActor.EvaluatePackage()
