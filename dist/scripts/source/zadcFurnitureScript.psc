@@ -815,6 +815,8 @@ Event OnUpdate()
 				StruggleScene(user)
 			EndIf
 		EndIf
+
+		; Since the struggle scene is long, there's a chance user got unlocked since the previous "if user" check. Re-check.
 		if user && !clib.IsAnimating(user)
 			; to make up for not checking here, we do when a scene ends.
 			CheckSelfBondageRelease()		
