@@ -38,6 +38,7 @@ Package[] Property StrugglePoseArmbinder Auto			; Packages containing the specia
 Package[] Property BoundPoseYoke Auto					; Packages containing special poses for yokes.
 Package[] Property StrugglePoseYoke Auto				; Packages containing the special struggle poses for yokes.
 Armor[] Property EquipDevices Auto						; List of DD devices or regular armor that will get equipped when an actor enters a device.
+Faction Property zadc_Faction_FurnitureUser Auto        ; Faction to be set on the user when he enters the furniture. Will be remove when the actor leaves the device. Can be used to detect actor state in Papyrus Conditions
 
 Key Property deviceKey  Auto               				; Key type to unlock this device
 Bool Property DestroyKey = False Auto 					; If set to true, the key(s) will be destroyed when the device is unlocked or escaped from.
@@ -126,6 +127,7 @@ Float Property ReleaseTimerStartedAt = 0.0 Auto Hidden	; When was this device eq
 bool isLockManipulated = false							; Indicates if the lock has been manipulated, allowing instant escape.
 Bool Mutex = False										; Mutex for the Activator
 Bool StruggleMutex = False								; Mutex for the struggle scene
+Bool UnlockMutex = False								; Mutex for unlock. Used to prevent package add/remove race conditions
 int lasthourdisplayed									; Variable to store the remaining hours until the timer opens the devices. Used to curb spamming of the "This device will unlock in x hours" message.
 Package CurrentPose										; Stores the current bound pose
 ;Float OldScale	= 1.0									; Stores the original scale of the actor in case the code needs to scale her.
@@ -349,46 +351,52 @@ Function LockActor(actor act)
 		SendDeviceEvent(True)
 	EndIf
 	AntiCL(user)
+	if zadc_Faction_FurnitureUser
+		user.AddToFaction(zadc_Faction_FurnitureUser)
+	endif
 EndFunction
 
 Function UnlockActor()
-	if user
-		self.enable()
-		UnregisterForUpdate()
-		UnregisterForAllControls()	
-		user.StopTranslation()
-		ActorUtil.RemovePackageOverride(user, CurrentPose)		
-		Debug.SendAnimationEvent(User, "IdleForceDefaultState")				
-		If user == Game.GetPlayer()			
-			Game.SetPlayerAIDriven(False)
-			Game.EnablePlayerControls()	
-			user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)
-			if zadcNGEscapeMinigameQuest.IsRunning()
-				zadcNGEscapeMinigameQuest.Stop()
-			EndIf
-		Else
-			user.SetDontMove(False)	
-			user.SetHeadTracking(True)
-			user.SetRestrained(False)			
-		EndIf			
-		Utility.Wait(0.2)
-		user.moveto(user)		
-		user.SetPosition(PosX, PosY, PosZ)
-		RemoveEffects(user)
-		clib.ResetNiOverrideOverride(user)
-		RemoveDevices(user)
-		;If ForceStripActor			
-		;	clib.RestoreOutfit(user)
-		;EndIf
-		clib.RestoreBondage(user)
-		User.EvaluatePackage()
-		If SendDeviceModEvents
-			SendDeviceEvent(False)
+	if !user ; Nobody to unlock.
+		Return
+	endif
+	UnlockMutex = True
+	self.enable()
+	UnregisterForUpdate()
+  UnregisterForAllControls()
+  user.StopTranslation()
+	ActorUtil.RemovePackageOverride(user, CurrentStruggle)
+	ActorUtil.RemovePackageOverride(user, CurrentPose)		
+	Debug.SendAnimationEvent(User, "IdleForceDefaultState")				
+	If user == Game.GetPlayer()			
+		Game.SetPlayerAIDriven(False)
+		Game.EnablePlayerControls()	
+		user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)
+		if zadcNGEscapeMinigameQuest.IsRunning()
+			zadcNGEscapeMinigameQuest.Stop()
 		EndIf
+		if zadc_Faction_FurnitureUser
+			user.RemoveFromFaction(zadc_Faction_FurnitureUser)
+		endif
 	Else
-		; something went wrong - insert error handling here
-		return
-	EndIf	
+		user.SetDontMove(False)	
+		user.SetHeadTracking(True)
+		user.SetRestrained(False)			
+	EndIf			
+	Utility.Wait(0.2)
+	user.moveto(user)		
+	user.SetPosition(PosX, PosY, PosZ)
+	RemoveEffects(user)
+	clib.ResetNiOverrideOverride(user)
+	RemoveDevices(user)
+	;If ForceStripActor			
+	;	clib.RestoreOutfit(user)
+	;EndIf
+	clib.RestoreBondage(user)
+	User.EvaluatePackage()
+	If SendDeviceModEvents
+		SendDeviceEvent(False)
+	EndIf
 	clib.ClearDevice(user)
 	;If OldScale != 1.0		
 	;	user.SetScale(OldScale)
@@ -405,6 +413,7 @@ Function UnlockActor()
 		LockPickEscapeChance = OriginalLockPickEscapeChance
 		BreakDeviceEscapeChance = OriginalBreakEscapeChance
 	EndIf	
+	UnlockMutex = False
 EndFunction
 
 Event OnControlDown(string control)
@@ -800,8 +809,7 @@ EndFunction
 
 Int StruggleTick = 0
 Event OnUpdate()
-	if user
-	;prevent race condition when this function gets called whilst in or starting the UnlockActor function
+	if user && !UnlockMutex ;prevent race condition when this function gets called whilst in or starting the UnlockActor function
 		StruggleTick += 1
 		if StruggleTick > 1
 			StruggleTick = 0
@@ -814,7 +822,9 @@ Event OnUpdate()
 				StruggleScene(user)
 			EndIf
 		EndIf
-		if !clib.IsAnimating(user)
+
+		; Since the struggle scene is long, there's a chance user got unlocked since the previous "if user" check. Re-check.
+		if user && !clib.IsAnimating(user)
 			; to make up for not checking here, we do when a scene ends.
 			CheckSelfBondageRelease()		
 		EndIf
@@ -991,7 +1001,7 @@ EndFunction
 Package CurrentStruggle
 Function StruggleScene(actor akActor)	
 	; set a mutex in case the scene gets called while it's still running
-	If strugglemutex || !akActor.Is3DLoaded() || akActor.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(akActor)
+	If strugglemutex || UnlockMutex || !akActor.Is3DLoaded() || akActor.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(akActor)
 		return
 	EndIf
 	strugglemutex = true	
@@ -1015,7 +1025,7 @@ Function StruggleScene(actor akActor)
 	libs.SexlabMoan(akActor)
 	Utility.Wait(2)
 	ActorUtil.RemovePackageOverride(akActor, CurrentStruggle)
-	If akActor == user ; User is still in contraption after running the above code and did not get unlocked
+	If akActor == user && !UnlockMutex ; I.e. user did not get unlocked during struggle, and is not currently being unlocked
 		ActorUtil.AddPackageOverride(akActor, CurrentPose, 99)
 	EndIf
 	akActor.EvaluatePackage()
