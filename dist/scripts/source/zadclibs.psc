@@ -22,6 +22,7 @@ FormList Property zadc_CellFurnitureList Auto
 Armor Property zadc_NoWaitItem Auto
 Armor Property zadc_PrisonerChainsInventory Auto
 Armor Property zadc_PrisonerChainsRendered Auto
+Faction Property zadcNGInContraptionFaction Auto
 
 Actor Property SelectedUser Auto Hidden
 
@@ -327,10 +328,12 @@ ObjectReference Function BobTheBuilder(Activator FurnitureToBuild, ObjectReferen
 		WhereToBuild = Libs.PlayerRef
 	EndIf
 	CloseMenus()
-	ObjectReference newFurniture = WhereToBuild.PlaceAtMe(FurnitureToBuild, 1, True, False)		
+	ObjectReference newFurniture = WhereToBuild.PlaceAtMe(FurnitureToBuild, 1, True, False)
 	AlignObject(newFurniture, WhereToBuild)
 	Utility.Wait(0.5)
-	MoveObjectByVector(WhereToBuild, newFurniture, 100.0)		
+	MoveObjectByVector(WhereToBuild, newFurniture, 100.0)
+	(newFurniture as zadcFurnitureScript).CanBePickedUp = True ; If you can place it, you should be able to pick it back up as well.
+	libs.Log("Placed contraption " + newFurniture.GetBaseObject().GetName() + " in cell " + newFurniture.GetParentCell() + " at location (" + newFurniture.X + " " + newFurniture.Y + " " + newFurniture.Z + ").")
 	return newFurniture
 EndFunction
 

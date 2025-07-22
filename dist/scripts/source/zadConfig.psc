@@ -15,7 +15,7 @@ String File = "../DD/DDConfig.json"
 
 ;Config Menu Script Version
 Int Function GetVersion()
-	Return 33
+	Return 34
 EndFunction
 
 ;Difficulty
@@ -91,13 +91,14 @@ Bool Property GotOSLA = False Auto Hidden
 Bool Property GotSLIF = False Auto Hidden
 
 ; Contraption escape minigame
+Bool Property UseContraptionStruggleMinigame = True Auto Hidden
 Bool Property ScheduleMinigameOptionsUpdate = False Auto Hidden ; Used to flag to the minigame that an options was changed.
 Bool Property ShowMinigameTutorial = True Auto Hidden
 Bool Property ShowMinigameNotifications = True Auto Hidden
 Int Property MinigameMinSequenceLength = 3 Auto Hidden
 Int Property MinigameMaxSequenceLength = 9 Auto Hidden
 Float Property MinigameMinKeyHoldTime = 0.5 Auto Hidden
-Float Property MinigameMaxKeyHoldTime = 1.0 Auto Hidden
+Float Property MinigameMaxKeyHoldTime = 0.5 Auto Hidden
 Float Property MinigameCriticalFailChance = 10.0 Auto Hidden
 Float Property MinigameEscalationChance = 10.0 Auto Hidden
 
@@ -312,10 +313,11 @@ Event OnPageReset(String page)
 		If LockMenuWhenTied && clibs.GetDevice(libs.PlayerRef) != None
 			AddTextOptionST("Lock", "This menu is locked while locked into a contraption.", "", OPTION_FLAG_DISABLED)
 		Else
+			AddToggleOptionST("UseContraptionStruggleMinigameST", "Enable Minigame", UseContraptionStruggleMinigame)
 			AddSliderOptionST("MinigameMinSequenceLengthST", "Actions Needed", MinigameMinSequenceLength, "{0}")
 			AddSliderOptionST("MinigameMaxSequenceLengthST", "Max Actions with Escalation", MinigameMaxSequenceLength, "{0}")
-			AddSliderOptionST("MinigameMinKeyHoldTimeST", "Minimum Hold Duration", MinigameMinKeyHoldTime, "{1} s")
-			AddSliderOptionST("MinigameMaxKeyHoldTimeST", "Maximum Hold Duration", MinigameMaxKeyHoldTime, "{1} s")
+			AddSliderOptionST("MinigameMinKeyHoldTimeST", "Lower Min Required Hold Time", MinigameMinKeyHoldTime, "{1} s")
+			AddSliderOptionST("MinigameMaxKeyHoldTimeST", "Upper Min Required Hold Time", MinigameMaxKeyHoldTime, "{1} s")
 			AddSliderOptionST("MinigameCriticalFailChanceST", "Critical Fail Chance", MinigameCriticalFailChance, "{1}%")
 			AddSliderOptionST("MinigameEscalationChanceST", "Escalation Chance", MinigameEscalationChance, "{1}%")
 		EndIf
@@ -672,6 +674,22 @@ State PreserveAggroST
 	EndEvent
 EndState
 
+State UseContraptionStruggleMinigameST
+	Event OnSelectST()
+		UseContraptionStruggleMinigame = !UseContraptionStruggleMinigame
+		SetToggleOptionValueST(UseContraptionStruggleMinigame)
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnDefaultST()
+		UseContraptionStruggleMinigame = True
+		SetToggleOptionValueST(UseContraptionStruggleMinigame)
+		ScheduleMinigameOptionsUpdate = True
+	EndEvent
+	Event OnHighlightST()
+		SetInfoText("Whether or not the minigame is used for contraption struggle escape attempts.\nIf not, the old method of a simple random animated struggle will be used.")
+	EndEvent
+EndState
+
 State ShowMinigameNotificationsST
 	Event OnSelectST()
 		ShowMinigameNotifications = !ShowMinigameNotifications
@@ -945,7 +963,7 @@ State MinigameMinKeyHoldTimeST
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(MinigameMinKeyHoldTime)
 		SetSliderDialogDefaultValue(0.5)
-		SetSliderDialogRange(0.5, 20)
+		SetSliderDialogRange(0.0, 20)
 		SetSliderDialogInterval(0.1)
 	EndEvent
 	Event OnSliderAcceptST(Float value)
@@ -963,15 +981,15 @@ State MinigameMinKeyHoldTimeST
 		ScheduleMinigameOptionsUpdate = True
 	EndEvent
 	Event OnHighlightST()
-		SetInfoText("Minimum number of seconds any key in the sequence has to be pressed for.")
+		SetInfoText("Lower limit of the range of minimum durations keys need to be held for.\nEach key needs to be held at least X seconds, where X is randomly picked between the min and max time set here.")
 	EndEvent
 EndState
 
 State MinigameMaxKeyHoldTimeST
 	Event OnSliderOpenST()
 		SetSliderDialogStartValue(MinigameMaxKeyHoldTime)
-		SetSliderDialogDefaultValue(1.0)
-		SetSliderDialogRange(0.5, 20)
+		SetSliderDialogDefaultValue(0.5)
+		SetSliderDialogRange(0.0, 20)
 		SetSliderDialogInterval(0.1)
 	EndEvent
 	Event OnSliderAcceptST(Float value)
@@ -983,12 +1001,12 @@ State MinigameMaxKeyHoldTimeST
 		ScheduleMinigameOptionsUpdate = True
 	EndEvent
 	Event OnDefaultST()
-		MinigameMaxKeyHoldTime = 1.0
+		MinigameMaxKeyHoldTime = 0.5
 		SetSliderOptionValueST(MinigameMaxKeyHoldTime, "{1}")
 		ScheduleMinigameOptionsUpdate = True
 	EndEvent
 	Event OnHighlightST()
-		SetInfoText("Maximum number of seconds any key in the sequence has to be pressed for.")
+		SetInfoText("Upper limit of the range of minimum durations keys need to be held for.\nEach key needs to be held at least X seconds, where X is randomly picked between the min and max time set here.")
 	EndEvent
 EndState
 
