@@ -38,7 +38,6 @@ Package[] Property StrugglePoseArmbinder Auto			; Packages containing the specia
 Package[] Property BoundPoseYoke Auto					; Packages containing special poses for yokes.
 Package[] Property StrugglePoseYoke Auto				; Packages containing the special struggle poses for yokes.
 Armor[] Property EquipDevices Auto						; List of DD devices or regular armor that will get equipped when an actor enters a device.
-Faction Property zadc_Faction_FurnitureUser Auto        ; Faction to be set on the user when he enters the furniture. Will be remove when the actor leaves the device. Can be used to detect actor state in Papyrus Conditions
 
 Key Property deviceKey  Auto               				; Key type to unlock this device
 Bool Property DestroyKey = False Auto 					; If set to true, the key(s) will be destroyed when the device is unlocked or escaped from.
@@ -90,6 +89,7 @@ Message Property zadc_EscapeBreakSuccessMSG Auto 		; Message to be displayed whe
 Message Property zadc_OnLockDeviceMSG Auto				; Message to be displayed when the player locks on an item, so she can manipulate the locks if she choses. You can customize it if you want, but make sure not to change the order and functionality of the buttons.
 Message Property zadc_OnLockDeviceNoManipulateMSG Auto	; Message to be displayed when the player locks on an item that's protected against lock manipulation. You can customize it if you want, but make sure not to change the order and functionality of the buttons.
 Message Property zadc_OnLockDeviceNPCMSG Auto			; Message to be displayed when the player locks an NPC into a device, so she can manipulate the locks if she choses. You can customize it if you want, but make sure not to change the order and functionality of the buttons.
+Message Property zadc_OnLockDeviceNPCNoManipulateMSG Auto	; Message to be displayed when the player locks an NPC into a device that's protected against lock manipulation. You can customize it if you want, but make sure not to change the order and functionality of the buttons.
 Message Property zadc_SelfbondageMSG Auto 				; Message to be displayed when the player plays with a device.
 
 ; Effects
@@ -130,6 +130,7 @@ Bool StruggleMutex = False								; Mutex for the struggle scene
 Bool UnlockMutex = False								; Mutex for unlock. Used to prevent package add/remove race conditions
 int lasthourdisplayed									; Variable to store the remaining hours until the timer opens the devices. Used to curb spamming of the "This device will unlock in x hours" message.
 Package CurrentPose										; Stores the current bound pose
+Package CurrentStruggle                                 ; Stores the currently playing struggle animation
 ;Float OldScale	= 1.0									; Stores the original scale of the actor in case the code needs to scale her.
 Float PosX												; Position of the subject before she got locked in the device. It will get used to place her back when released from the device.
 Float PosY
@@ -158,7 +159,7 @@ String Function PickRandomSexScene()
 	Return SexAnimations[Utility.RandomInt(0, SexAnimations.Length - 1)]
 EndFunction
 
-Function ApplyEffects(Actor akActor)	
+Function ApplyEffects(Actor akActor)
 	Int i = AppliedSpellEffects.Length	
 	While i > 0
 		i -= 1
@@ -198,7 +199,7 @@ Bool Function CheckLockShield()
 	EndIf
 EndFunction
 
-Function CheckSelfBondageRelease()	
+Function CheckSelfBondageRelease()
 	If !isSelfBondage
 		return 
 	EndIf
@@ -208,6 +209,7 @@ Function CheckSelfBondageRelease()
 		if user == libs.PlayerRef
 			libs.notify("The timed lock clicks open and frees you from the device!", messageBox = true)
 		EndIf
+		libs.Log("Contraption self-bondage timer is done, unlocking user.")
 		UnlockActor()
 		return	
 	Else
@@ -220,7 +222,7 @@ Function CheckSelfBondageRelease()
 	EndIf
 EndFunction
 
-Function ApplyDevices(Actor akActor)	
+Function ApplyDevices(Actor akActor)
 	Int i = EquipDevices.Length	
 	While i > 0
 		i -= 1
@@ -256,7 +258,7 @@ Function SendDeviceEvent(Bool LockStatus)
 	Endif	
 EndFunction
 
-Function LockActor(actor act)		
+Function LockActor(actor act)
 	if !libs.SexLab.ActorLib.CanAnimate(act)
 		return
 	EndIf
@@ -334,6 +336,7 @@ Function LockActor(actor act)
 	EndIf
 	ApplyEffects(user)
 	ApplyDevices(user)	
+	user.AddToFaction(clib.zadcNGInContraptionFaction)
 	RegisterForSingleUpdate(30)	
 	LastBreakEscapeAttemptAt = 0.0
 	LastStruggleEscapeAttemptAt = 0.0
@@ -351,9 +354,7 @@ Function LockActor(actor act)
 		SendDeviceEvent(True)
 	EndIf
 	AntiCL(user)
-	if zadc_Faction_FurnitureUser
-		user.AddToFaction(zadc_Faction_FurnitureUser)
-	endif
+	libs.Log("Locked actor " + user.GetLeveledActorBase().GetName() + " " + user + " into contraption " + DeviceName + " " + self + ", scripted device = " + ScriptedDevice + ".")
 EndFunction
 
 Function UnlockActor()
@@ -363,26 +364,22 @@ Function UnlockActor()
 	UnlockMutex = True
 	self.enable()
 	UnregisterForUpdate()
-        UnregisterForAllControls()
-        user.StopTranslation()
+	UnregisterForAllControls()
+	user.StopTranslation()
 	ActorUtil.RemovePackageOverride(user, CurrentStruggle)
-	ActorUtil.RemovePackageOverride(user, CurrentPose)		
-	Debug.SendAnimationEvent(User, "IdleForceDefaultState")				
-	If user == Game.GetPlayer()			
+	ActorUtil.RemovePackageOverride(user, CurrentPose)
+	If user == Game.GetPlayer()
 		Game.SetPlayerAIDriven(False)
 		Game.EnablePlayerControls()	
 		user.RemoveItem(clib.zadc_NoWaitItem, user.GetItemCount(clib.zadc_NoWaitItem), abSilent = True)
-		if zadcNGEscapeMinigameQuest.IsRunning()
+		if zadcNGEscapeMinigameQuest && zadcNGEscapeMinigameQuest.IsRunning()
 			zadcNGEscapeMinigameQuest.Stop()
 		EndIf
-		if zadc_Faction_FurnitureUser
-			user.RemoveFromFaction(zadc_Faction_FurnitureUser)
-		endif
 	Else
 		user.SetDontMove(False)	
 		user.SetHeadTracking(True)
 		user.SetRestrained(False)			
-	EndIf			
+	EndIf
 	Utility.Wait(0.2)
 	user.moveto(user)		
 	user.SetPosition(PosX, PosY, PosZ)
@@ -402,7 +399,6 @@ Function UnlockActor()
 	;	user.SetScale(OldScale)
 	;	OldScale = 1.0
 	;EndIf
-	user = none		
 	isSelfBondage = False
 	isLockManipulated = False
 	If DestroyOnRemove
@@ -412,17 +408,20 @@ Function UnlockActor()
 		BaseEscapeChance = OriginalBaseEscapeChance
 		LockPickEscapeChance = OriginalLockPickEscapeChance
 		BreakDeviceEscapeChance = OriginalBreakEscapeChance
-	EndIf	
+	EndIf
+	libs.Log("Unlocked actor " + user.GetLeveledActorBase().GetName() + " " + user + " from contraption " + DeviceName + " " + self + ", scripted device = " + ScriptedDevice + ".")
+	Debug.SendAnimationEvent(User, "IdleForceDefaultState")
+	user = none
 	UnlockMutex = False
 EndFunction
 
 Event OnControlDown(string control)
 	If UI.IsMenuOpen("Console") || UI.IsMenuOpen("Console Native UI Menu")
 		Return
-	EndIf	
+	EndIf
 	If control == "Activate"
 		self.Activate(libs.PlayerRef)
-	Endif	
+	Endif
 EndEvent
 
 Bool Function CanMakeUnlockAttempt()
@@ -439,7 +438,7 @@ Bool Function CanMakeUnlockAttempt()
 	return False
 EndFunction
 
-Bool Function CheckLockAccess()		
+Bool Function CheckLockAccess()
 	If LockAccessDifficulty > 0.0
 		If !CanMakeUnlockAttempt()
 			Return False
@@ -467,151 +466,118 @@ Bool Function CheckLockAccess()
 	Return True
 EndFunction
 
-Function DeviceMenuLock()	
+Function DeviceMenuLock()
 	Int i
 	If CanBePickedUp
 		i = zadc_DeviceMsgPlayerNotLockedCanPick.Show()
 	Else
 		i = zadc_DeviceMsgPlayerNotLocked.Show()
 	EndIf
-	if i == 0
-		isLockManipulated = False		
-		isSelfBondage = False		
-		If !DisableLockManipulation && libs.Config.UseItemManipulation
-			Int Choice = zadc_OnLockDeviceMSG.Show()
-			If Choice == 1
-				;self bondage game	
-				isSelfBondage = True
-				If AllowTimerDialogue
-					Int Choice2 = zadc_SelfbondageMSG.Show()
-					If Choice2 == 0
-						SelfBondageReleaseTimer = 1.0
-					Elseif Choice2 == 1
-						SelfBondageReleaseTimer = 2.0	
-					Elseif Choice2 == 2
-						SelfBondageReleaseTimer = 5.0	
-					Elseif Choice2 == 3
-						SelfBondageReleaseTimer = 12.0	
-					Elseif Choice2 == 4
-						SelfBondageReleaseTimer = 24.0	
-					Elseif Choice2 == 1
-						clib.UserRef.Clear()
-						return
-					EndIf
-				EndIf
-			elseIf Choice == 2
-				; manipulate the locks
-				isLockManipulated = True											
-			Else
-				; display lock message, but otherwise no need to do anything, just let the function run
-				zadc_OnDeviceLockMSG.Show()			
-			EndIf
+
+	if i == 0 ; "Lock yourself in"
+		isLockManipulated = False
+		isSelfBondage = False
+		int LockMenuChoice
+		bool AllowLockManipulate = libs.Config.UseItemManipulation && !DisableLockManipulation
+		If AllowLockManipulate
+			LockMenuChoice = zadc_OnLockDeviceMSG.Show()
 		Else
-			Int Choice = zadc_OnLockDeviceNoManipulateMSG.Show()
-			If Choice == 1
-				;self bondage game	
-				isSelfBondage = True
-				If AllowTimerDialogue
-					Int Choice2 = zadc_SelfbondageMSG.Show()
-					If Choice2 == 0
-						SelfBondageReleaseTimer = 1.0
-					Elseif Choice2 == 1
-						SelfBondageReleaseTimer = 2.0	
-					Elseif Choice2 == 2
-						SelfBondageReleaseTimer = 5.0	
-					Elseif Choice2 == 3
-						SelfBondageReleaseTimer = 12.0	
-					Elseif Choice2 == 4
-						SelfBondageReleaseTimer = 24.0	
-					Elseif Choice2 == 1
-						clib.UserRef.Clear()
-						return
-					EndIf
-				EndIf
+			LockMenuChoice = zadc_OnLockDeviceNoManipulateMSG.Show()
+		EndIf
+		If LockMenuChoice == 0     ; "Engage the lock"
+			zadc_OnDeviceLockMSG.Show()
+			LockActor(libs.playerRef)
+		elseIf LockMenuChoice == 1 ; "Self-bondage game"
+			DeviceMenuSelfBondage(libs.playerRef)
+		elseIf LockMenuChoice == 2 ; "Manipulate the locks" or "Cancel", depending on menu.
+			if AllowLockManipulate
+				isLockManipulated = True
+				libs.Log("Contraption lock manipulated for " + DeviceName + " " + self + ".")
+				LockActor(libs.playerRef)
 			Else
-				zadc_OnDeviceLockMSG.Show()	
-			EndIf			
+				zadc_OnLeaveItNotLockedMSG.Show()
+			EndIf
+		elseIf LockMenuChoice == 3 ; "Cancel" option for menu with manipulate option.
+			zadc_OnLeaveItNotLockedMSG.Show()
 		EndIf
-	elseif i == 1
-		; Examine device
-		DisplayDifficultyMsg()			
-		return
-	EndIf
-	If !CanBePickedUp
-		If i == 2
-			; do nothing, just abort
-			zadc_OnLeaveItNotLockedMSG.Show()			
-			return
-		EndIf
-	Else 
-		If i == 2
-			; this is the pick up option for the CanPick version of the dialogue
+	ElseIf i == 1 ; "Examine device"
+		DisplayDifficultyMsg()
+	ElseIf i == 2 ; "Pick up" or "Carry on", depending on menu.
+		If CanBePickedUp
 			self.Disable()
 			self.Delete()
 			libs.PlayerRef.AddItem(Blueprint, 1, False)
-			return
 		Else
-			; do nothing, just abort
-			zadc_OnLeaveItNotLockedMSG.Show()			
+			zadc_OnLeaveItNotLockedMSG.Show()
+		EndIf
+	EndIf
+EndFunction
+
+Function DeviceMenuSelfBondage(Actor subject)
+	clib.UserRef.ForceRefTo(subject) ; Set alias ref so their name can display in the menus.
+	isSelfBondage = True
+	If AllowTimerDialogue
+		Int Choice = zadc_SelfbondageMSG.Show()
+		If Choice == 0
+			SelfBondageReleaseTimer = 1.0
+		Elseif Choice == 1
+			SelfBondageReleaseTimer = 2.0
+		Elseif Choice == 2
+			SelfBondageReleaseTimer = 5.0
+		Elseif Choice == 3
+			SelfBondageReleaseTimer = 12.0
+		Elseif Choice == 4
+			SelfBondageReleaseTimer = 24.0
+		Elseif Choice == 5 ; Cancel
+			zadc_OnLeaveItNotLockedMSG.Show()
+			clib.UserRef.Clear()
 			return
 		EndIf
 	EndIf
-	LockActor(libs.playerRef)
+	libs.Log("Contraption self-bondage timer started on contraption" + DeviceName + " " + self + " for actor " + subject.GetLeveledActorBase().GetName() + " " + subject + ": " + SelfBondageReleaseTimer + " hour(s).")
+	LockActor(subject)
+	clib.UserRef.Clear()
 EndFunction
 
-Function DeviceMenuLockNPC(Actor subject)	
-	clib.UserRef.ForceRefTo(subject)	
+Function DeviceMenuLockNPC(Actor subject)
+	clib.UserRef.ForceRefTo(subject) ; Set alias ref so their name can display in the menus.
 	Int i 
 	i = zadc_DeviceMsgNPCNotLocked.Show()
-	if i == 0
-		isLockManipulated = False		
-		isSelfBondage = False		
-		If !DisableLockManipulation && libs.Config.UseItemManipulation
-			Int Choice = zadc_OnLockDeviceNPCMSG.Show()
-			If Choice == 1
-				;self bondage game	
-				isSelfBondage = True
-				If AllowTimerDialogue
-					Int Choice2 = zadc_SelfbondageMSG.Show()
-					If Choice2 == 0
-						SelfBondageReleaseTimer = 1.0
-					Elseif Choice2 == 1
-						SelfBondageReleaseTimer = 2.0	
-					Elseif Choice2 == 2
-						SelfBondageReleaseTimer = 5.0	
-					Elseif Choice2 == 3
-						SelfBondageReleaseTimer = 12.0	
-					Elseif Choice2 == 4
-						SelfBondageReleaseTimer = 24.0	
-					Elseif Choice2 == 1
-						clib.UserRef.Clear()
-						return
-					EndIf
-				EndIf
-			elseIf Choice == 2
-				; manipulate the locks
-				isLockManipulated = True											
-			Else
-				; display lock message, but otherwise no need to do anything, just let the function run
-				zadc_OnDeviceLockMSG.Show()			
-			EndIf
+	if i == 0 ; "Lock in device"
+		isLockManipulated = False
+		isSelfBondage = False
+		int LockMenuChoice
+		bool AllowLockManipulate = libs.Config.UseItemManipulation && !DisableLockManipulation
+		If AllowLockManipulate
+			LockMenuChoice = zadc_OnLockDeviceNPCMSG.Show()
 		Else
-			zadc_OnDeviceLockMSG.Show()			
+			LockMenuChoice = zadc_OnLockDeviceNPCNoManipulateMSG.Show()
 		EndIf
-	elseif i == 1
-		; Examine device
-		DisplayDifficultyMsg()			
-		return
-	elseif i == 2
-		; do nothing, just abort
-		zadc_OnLeaveItNotLockedMSG.Show()			
-		return
-	EndIf	
+		If LockMenuChoice == 0 ; "Engage the locks"
+			zadc_OnDeviceLockMSG.Show()
+			LockActor(subject)
+		ElseIf LockMenuChoice == 1 ; "Set release timer"
+			DeviceMenuSelfBondage(subject)
+		elseIf LockMenuChoice == 2 ; "Manipulate the locks" or "Cancel", depending on menu.
+			if AllowLockManipulate
+				libs.Log("Contraption lock manipulated for " + DeviceName + " " + self + ".")
+				isLockManipulated = true
+				LockActor(subject)
+			Else
+				zadc_OnLeaveItNotLockedMSG.Show()
+			EndIf
+		elseIf LockMenuChoice == 3 ; "Cancel" option for menu with manipulate option.
+			zadc_OnLeaveItNotLockedMSG.Show()
+		EndIf
+	elseif i == 1 ; "Examine device"
+		DisplayDifficultyMsg()
+	elseif i == 2 ; "Carry on"
+		zadc_OnLeaveItNotLockedMSG.Show()
+	EndIf
 	clib.UserRef.Clear()
-	LockActor(subject)
 EndFunction
 
-Function DeviceMenuUnlock()	
+Function DeviceMenuUnlock()
 	Int i = zadc_DeviceMsgPlayerLocked.Show()
 	If i == 0
 		; unlock
@@ -708,7 +674,7 @@ Bool Function UnlockAttempt()
 	return True
 EndFunction
 
-Event OnActivate(ObjectReference akActionRef)	
+Event OnActivate(ObjectReference akActionRef)
 	; set a mutex in case the device gets activated multiple times in short order
 	If mutex
 		return
@@ -745,7 +711,7 @@ Event OnActivate(ObjectReference akActionRef)
 				If !ScriptedDevice
 					DeviceMenuNPC()
 				Else
-					libs.Notify("This device cannot be interacted with.")				
+					libs.Notify("This device cannot be interacted with.")
 				EndIf	
 			Else
 				UnlockActor()
@@ -757,11 +723,12 @@ Event OnActivate(ObjectReference akActionRef)
 				If !ScriptedDevice
 					DeviceMenuUnlock()
 				Else
-					libs.Notify("This device cannot be interacted with.")				
+					libs.Notify("This device cannot be interacted with.")
 				EndIf	
 			EndIf			
 		EndIf
-	EndIf 		
+	EndIf
+	Utility.Wait(0.25) ; Prevent menu from re-opening right away if you select "carry on"
 	mutex = false
 EndEvent
 
@@ -818,11 +785,10 @@ Event OnUpdate()
 		; Don't run random struggle while passerby action is running.
 		If !PasserbyAction() && StruggleTick == 0
 			; Don't run random struggle if user is already doing struggle minigame (player only).
-			If user != libs.PlayerRef || !zadcNGEscapeMinigameQuest.IsRunning() || zadcNGEscapeMinigameQuest.IsSuspended()
+			If user != libs.PlayerRef || !zadcNGEscapeMinigameQuest || !zadcNGEscapeMinigameQuest.IsRunning() || zadcNGEscapeMinigameQuest.IsSuspended()
 				StruggleScene(user)
 			EndIf
 		EndIf
-
 		; Since the struggle scene is long, there's a chance user got unlocked since the previous "if user" check. Re-check.
 		if user && !clib.IsAnimating(user)
 			; to make up for not checking here, we do when a scene ends.
@@ -831,7 +797,7 @@ Event OnUpdate()
 	EndIf
 EndEvent
 
-Event OnDDCSLEnd(int tid, bool hasPlayer)		
+Event OnDDCSLEnd(int tid, bool hasPlayer)
 	sslThreadController SLcontroller = libs.SexLab.GetController(tid)
 	Actor[] actors = SLcontroller.Positions
 	int numactors = actors.Length
@@ -960,6 +926,7 @@ Bool Function SexScene(Actor Partner, String AnimationName = "")
 		If SKSE.GetPluginVersion("SexLabUtil") >= 34340864
 			Debug.SendAnimationEvent(User, "IdleForceDefaultState")	; sneaky v2 p+ compatibility to make sure animations start from a default idle, otherwise the first stage on the actor in a contraption didn't play in my tests
 		endif
+		libs.Log("Starting contraption sex scene with " + SceneSexActors[0].GetLeveledActorBase().GetName() + " and "+ SceneSexActors[1].GetLeveledActorBase().GetName() + ".")
 		libs.SexLab.StartSex(Positions = SceneSexActors, anims = Sanims, centeron = User, allowbed = false, hook = "DDCEnd")
 		return true
 	EndIf
@@ -972,8 +939,11 @@ EndFunction
 Function EscapeAttempt()
 	Int EscapeOption = zadc_EscapeDeviceMSG.show()
 	If EscapeOption == 0 ; Struggle
-		EscapeAttemptMinigame()
-		;EscapeAttemptStruggle()
+		If libs.Config.UseContraptionStruggleMinigame
+			EscapeAttemptMinigame()
+		Else
+			EscapeAttemptStruggle()
+		EndIf
 	Elseif EscapeOption == 1 ; Pick Lock
 		EscapeAttemptLockPick()
 	Elseif EscapeOption == 2 ; Break Device
@@ -998,7 +968,6 @@ Function EscapeAttemptNPC()
 	EndIf			
 EndFunction
 
-Package CurrentStruggle
 Function StruggleScene(actor akActor)	
 	; set a mutex in case the scene gets called while it's still running
 	If strugglemutex || UnlockMutex || !akActor.Is3DLoaded() || akActor.GetParentCell() != Libs.PlayerRef.GetParentCell() || clib.IsAnimating(akActor)
@@ -1240,6 +1209,11 @@ Function SelfBondageReward()
 EndFunction
 
 Function EscapeAttemptMinigame()
+	; Fallback for older mods using custom contraptions that don't have the property filled.
+	If zadcNGEscapeMinigameQuest == None
+		zadcNGEscapeMinigameQuest = Game.GetFormFromFile(0x00005DD5, "Devious Devices - Contraptions.esm") as zadcNGEscapeMinigame
+	EndIf
+
 	if !zadcNGEscapeMinigameQuest.IsRunning()
 		zadcNGEscapeMinigameQuest.Start()
 	ElseIf zadcNGEscapeMinigameQuest.IsSuspended()
@@ -1251,6 +1225,9 @@ Function EscapeAttemptStruggle()
 	If !CanMakeStruggleEscapeAttempt()
 		return
 	EndIf
+	
+	libs.Log("Actor " + User.GetLeveledActorBase().GetName() + " " + User + " tries to escape " + DeviceName + " via simple struggle.")
+
 	if user == libs.PlayerRef
 		zadc_EscapeStruggleMSG.Show()		
 	Else
@@ -1319,8 +1296,10 @@ Function EscapeAttemptBreak()
 		return
 	EndIf
 
-	; Suspend the minigame while lockpick escape runs. It'll resume next time player picks "struggle".
-	if zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
+	libs.Log("Actor " + User.GetLeveledActorBase().GetName() + " " + User + " tries to escape " + DeviceName + " via break device.")
+
+	; Suspend the minigame while break escape runs. It'll resume next time player picks "struggle".
+	if zadcNGEscapeMinigameQuest && zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
 		zadcNGEscapeMinigameQuest.SuspendMinigame()
 	EndIf
 
@@ -1388,6 +1367,7 @@ Function EscapeAttemptLockPick()
 	If !CanMakeLockPickEscapeAttempt()
 		return
 	EndIf
+
 	zadc_EscapeLockPickMSG.Show()
 	; first make a check against lock difficulty as you can't pick what you can't reach! The cooldown timer has already reset at this point.
 	If Utility.RandomFloat(0.0, 99.9) < LockAccessDifficulty && User == libs.PlayerRef
@@ -1395,8 +1375,10 @@ Function EscapeAttemptLockPick()
 		return
 	EndIf
 
+	libs.Log("Actor " + User.GetLeveledActorBase().GetName() + " " + User + " tries to escape " + DeviceName + " via lockpick.")
+
 	; Suspend the minigame while lockpick escape runs. It'll resume next time player picks "struggle".
-	if zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
+	if zadcNGEscapeMinigameQuest && zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
 		zadcNGEscapeMinigameQuest.SuspendMinigame()
 	EndIf
 

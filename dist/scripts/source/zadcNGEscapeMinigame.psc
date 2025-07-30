@@ -43,11 +43,15 @@ Function StartMinigame()
 
 	; Show a tutorial message to get started
 	If Config.ShowMinigameTutorial
-		zadcNG_Minigame03TutorialMsg01.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_01", afDuration=7, afInterval=0, aiMaxTimes=1)
-		Utility.Wait(7.0)
-		zadcNG_Minigame03TutorialMsg02.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_02", afDuration=7, afInterval=0, aiMaxTimes=1)
-		Utility.Wait(7.0)
-		zadcNG_Minigame03TutorialMsg03.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_03", afDuration=7, afInterval=0, aiMaxTimes=1)
+		If Game.UsingGamepad()
+			zadcNG_Minigame03TutorialMsg01Controller.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_01", afDuration=6, afInterval=0, aiMaxTimes=1)
+		Else
+			zadcNG_Minigame03TutorialMsg01.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_01", afDuration=6, afInterval=0, aiMaxTimes=1)
+		EndIf
+		Utility.Wait(6.0)
+		zadcNG_Minigame03TutorialMsg02.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_02", afDuration=6, afInterval=0, aiMaxTimes=1)
+		Utility.Wait(6.0)
+		zadcNG_Minigame03TutorialMsg03.ShowAsHelpMessage("zadcNG_ContraptionMinigame03_03", afDuration=6, afInterval=0, aiMaxTimes=1)
 	EndIf
 
 	_isSuspended = false
@@ -72,7 +76,7 @@ EndFunction
 
 ; Stops the minigame and unlocks the player.
 Function StopMinigame()
-	Stop()
+	EndMinigame()
 EndFunction
 
 ; Sets difficulty options of the minigame. Call this function *after* StartMinigame and specify the parameters manually.
@@ -196,8 +200,12 @@ Sound Property zadNG_WhisperSuccessMale Auto
 Sound Property zadNG_YesGaggedFemale Auto
 Sound Property zadNG_YesGaggedMale Auto
 Message Property zadcNG_Minigame03TutorialMsg01 Auto
+Message Property zadcNG_Minigame03TutorialMsg01Controller Auto
 Message Property zadcNG_Minigame03TutorialMsg02 Auto
 Message Property zadcNG_Minigame03TutorialMsg03 Auto
+Message Property zadcNG_Minigame03TutorialMsg04 Auto
+Message Property zadcNG_Minigame03TutorialMsg05 Auto
+Message Property zadcNG_Minigame03TutorialMsg06 Auto
 Keyword Property zad_DeviousGag Auto
 Spell Property zadcNG_FlashGreen Auto
 Spell Property zadcNG_FlashRed Auto
@@ -231,10 +239,17 @@ int breathingLPSoundID = -1
 
 Event OnInit()
 	validKeys = new int[4]
-	validKeys[0] = Input.GetMappedKey("Back")
-	validKeys[1] = Input.GetMappedKey("Forward")
-	validKeys[2] = Input.GetMappedKey("Strafe Left")
-	validKeys[3] = Input.GetMappedKey("Strafe Right")
+	if Game.UsingGamepad()
+		validKeys[0] = 274 ; Left_Shoulder
+		validKeys[1] = 275 ; Right_Shoulder
+		validKeys[2] = 280 ; Left_Trigger
+		validKeys[3] = 281 ; Right_Trigger
+	Else
+		validKeys[0] = Input.GetMappedKey("Back", 0)
+		validKeys[1] = Input.GetMappedKey("Forward", 0)
+		validKeys[2] = Input.GetMappedKey("Strafe Left", 0)
+		validKeys[3] = Input.GetMappedKey("Strafe Right", 0)
+	EndIf
 
 	requiredCode = new int[16]
 	requiredDurations = new float[16]
@@ -260,7 +275,8 @@ Function Fail()
 	; Critical fail chance is increased if a vibration effect is active, and further increased if that happens at high arousal.
 	; The extra chance ranges from +10% to +60%. This makes it quite risky to fail during vibration events. Maybe just sit back instead for a bit, hm? ;-)
 	float critFailPct = CriticalFailChancePercent
-	if DDLibs.IsVibrating(PlayerRef) && CriticalFailChancePercent > 0.0 ; If crit fail% is 0, assume there's a good reason for it and don't increase it.
+	if critFailPct > 0.0 && DDLibs.IsVibrating(PlayerRef) ; If crit fail% is 0, assume there's a good reason for it and don't increase it.
+		zadcNG_Minigame03TutorialMsg06.ShowAsHelpMessage("zadcNG_ContraptionMinigame06_01", afDuration=6, afInterval=0, aiMaxTimes=1)
 		critFailPct += 10.0 + DDlibs.Aroused.GetActorExposure(PlayerRef) / 2.0
 	EndIf
 	
@@ -268,9 +284,11 @@ Function Fail()
 	If Utility.RandomFloat(0, 100) < critFailPct
 		; If so, roll a new sequence, possibly a longer one than before (escalation). Play SFX and VFX for some feedback.
 		CriticalFail(EscalationChancePercent)
+		zadcNG_Minigame03TutorialMsg05.ShowAsHelpMessage("zadcNG_ContraptionMinigame05_01", afDuration=6, afInterval=0, aiMaxTimes=1)
 	Else
 		; Regular fail. Play (different) VFX/SFX and only reset the entered code, but don't make it longer.
 		RegularFail()
+		zadcNG_Minigame03TutorialMsg04.ShowAsHelpMessage("zadcNG_ContraptionMinigame04_01", afDuration=6, afInterval=0, aiMaxTimes=1)
 	EndIf
 EndFunction
 
@@ -283,8 +301,11 @@ Function CriticalFail(float escalationChancePct)
 	gruntFrustrated.Play(PlayerRef)
 	Utility.Wait(0.3)
 	zadNG_WoodCreak.Play(PlayerRef)
-	Utility.Wait(0.7)
-	breathingTired.Play(PlayerRef)
+	; Scale cooldown depending on how far player got into sequence.
+	; The base cooldown is longer than regular fail one to better differentiate between them.
+	int breathingSID = breathingTired.Play(PlayerRef)
+	Sound.SetInstanceVolume(breathingSID, 0.5 + 0.1 * nrEnteredKeys)
+	Utility.Wait(2.0 + 0.33 * nrEnteredKeys)
 	If escalate
 		EscalateSequence()
 	Else
@@ -295,6 +316,7 @@ Function CriticalFail(float escalationChancePct)
 	DDLibs.Log("[zadc-NG] (Contraption struggle escape minigame) Critical fail triggered, re-randomizing the code to guess...")
 	GenerateNewRequiredCode()
 	ResetEnteredCode()
+	Sound.StopInstance(breathingSID)
 EndFunction
 
 Function EscalateSequence()
@@ -310,14 +332,17 @@ Function RegularFail()
 	SendFailModEvent(wasCriticalFail=false, wasEscalated=false)
 	PlayerRef.SetExpressionOverride(aiMood=8, aiStrength=90) ; 8 = Mood Anger
 	zadcNG_FlashRed.Cast(PlayerRef)
-	gruntFrustrated.Play(PlayerRef)
+	int gruntSID = gruntFrustrated.Play(PlayerRef)
+	Sound.SetInstanceVolume(gruntSID, 0.5)
 	Utility.Wait(0.3)
 	zadNG_WoodCreak.Play(PlayerRef)
 	If (nrEnteredKeys > 2)
 		; Extra cooldown depending on how far player got into sequence.
 		; This just feels appropriate: if you fail early you want to try again fast, if you fail late you need a second to reset.
-		breathingTired.Play(PlayerRef)
-		Utility.Wait(nrEnteredKeys / 2)
+		int breathingSID = breathingTired.Play(PlayerRef)
+		Sound.SetInstanceVolume(breathingSID, 0.5 + 0.1 * nrEnteredKeys)
+		Utility.Wait(0.5 + 0.5 * nrEnteredKeys)
+		Sound.StopInstance(breathingSID)
 	EndIf
 	ResetEnteredCode()
 	If Config.ShowMinigameNotifications
@@ -327,7 +352,8 @@ EndFunction
 
 Function Success()
 	DDLibs.Log("[zadc-NG] (Contraption struggle escape minigame) player entered the correct code. Stopping minigame.")
-	StopMinigame()
+	contraption.UnlockActor()
+	Stop()
 EndFunction
 
 Function Progress()
@@ -383,7 +409,6 @@ Function EndMinigame()
 	UnregisterForModEvent("DeviceActorOrgasmEx")
 	UnregisterForAllKeys()
 	contraption.scriptedDevice = false
-	contraption.UnlockActor()
 	contraption = None
 	Message.ResetHelpMessage("zadcNG_ContraptionMinigame03_01")
 	Message.ResetHelpMessage("zadcNG_ContraptionMinigame03_02")
@@ -402,6 +427,13 @@ float[] requiredDurations
 int[] enteredCode
 int nrEnteredKeys = 0 Conditional
 
+; NOTE: I tried using RegisterForControl instead of RegisterForKey, but it has problems.
+; For one, movement Controls are only detected when player movement controls are enabled.
+; Since those get disabled in contraptions, we have to either use manual key scans instead, or
+; allow movement controls and rely on SetPlayerAIDriven to prevent the player from moving.
+; Aside from that, RegisterForControl doesn't seem to detect controller analog stick movement,
+; so I'd still need to register different controls for controllers. I'll just stick to keys.
+
 Function RegisterControls()
 	int i = validKeys.Length
 	While i > 0
@@ -416,10 +448,15 @@ Event OnKeyDown(Int keyCode)
 		return
 	EndIf
 
-	; Check whther the MCM changed and we need to update the difficulty options of the game.
+	; Check whether the MCM changed and we need to update the difficulty options of the game.
 	if Config.ScheduleMinigameOptionsUpdate
 		SetDifficultyParameters()
 		Config.ScheduleMinigameOptionsUpdate = False
+		If !Config.UseContraptionStruggleMinigame
+			; Player disabled minigame while it was running. Suspend it.
+			SuspendMinigame()
+			Return
+		EndIf
 	endIf
 
 	keyHeld = keyCode
@@ -504,7 +541,7 @@ Function GenerateNewRequiredCode()
 
 	; We will take the first N digits of this code to be the required code.
 	; For short codes (say N=3, M=4) we could thus have e.g. [1, 0, 3] i.e. one input key is not used.
-	; For long codes (M > N, say N=6, M=4) we will have duplicate keys, but only minimally e.g. [1, 0, 3, 3, 1, 2].
+	; For long codes (N > M, say N=6, M=4) we will have duplicate keys, but only minimally e.g. [1, 0, 3, 2, 1, 2].
 	; Numbers can only appear N/M times at maximum. This is a pattern that can be figured out by a player.
 	
 	DDLibs.Log("[zadc-NG] (Contraption struggle escape minigame) New required code is first " + LengthOfSequence + " digits of: " + requiredCode + " with required durations: " + requiredDurations)
