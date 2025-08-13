@@ -755,6 +755,12 @@ Bool Function PasserbyAction()
         Else
             libs.notify(currenttest.GetLeveledActorBase().GetName() + " is going to take advantage of " + User.GetLeveledActorBase().GetName() + ".")
         EndIf
+		
+		; Suspend the struggle minigame, if it's running. It can be resumed again later by picking "struggle" from the menu.
+		if zadcNGEscapeMinigameQuest && zadcNGEscapeMinigameQuest.IsRunning() && !zadcNGEscapeMinigameQuest.IsSuspended()
+			zadcNGEscapeMinigameQuest.SuspendMinigame()
+		EndIf
+
 		SexScene(currenttest)
 		return true
 	EndIf
