@@ -1,1 +1,4 @@
+*.esp binary
+*.esm binary
+*.esl binary
 * text eol=crlf
