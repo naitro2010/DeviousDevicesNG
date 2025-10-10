@@ -70,6 +70,7 @@ Event OnInit()
 EndEvent
 
 Event OnPlayerLoadGame()
+	RegisterForMenu("Journal Menu")
 	UpdateMuffleState()
 EndEvent
 
