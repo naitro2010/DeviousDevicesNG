@@ -415,7 +415,6 @@ Function EndMinigame()
 	PlayerRef.ClearExpressionOverride()
 	UnregisterForModEvent("DeviceActorOrgasmEx")
 	UnregisterForAllKeys()
-	contraption.scriptedDevice = false
 	contraption = None
 	cooldown = false
 	_isSuspended = false
