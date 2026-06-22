@@ -14,7 +14,7 @@ using namespace SKSE;
 namespace DeviousDevices {
     constexpr std::string_view PapyrusClass = "zadNativeFunctions";
     RE::BSScript::Object* GetWornObjectScript(RE::Actor* actor, RE::TESObjectARMO* armor,
-                                              RE::BSFixedString scriptClass) {
+                                              RE::BSFixedString scriptClass, RE::BSFixedString p) {
         RE::BSScript::Object* result = nullptr;
         auto VM = RE::BSScript::Internal::VirtualMachine::GetSingleton();
         if (!VM) return result;
@@ -51,9 +51,16 @@ namespace DeviousDevices {
                                     for (uint32_t s_i = 0; s_i < attached_script_count; s_i++) {
                                         auto& script = attached_scripts->second[s_i];
                                         if (auto s = script.get()) {
-                                            if (RE::BSFixedString(s->type->name) == scriptClass) {
-                                                result = s;
-                                                return result;
+                                            if (scriptClass != RE::BSFixedString("")) {
+                                                if (RE::BSFixedString(s->type->name) == scriptClass) {
+                                                    result = s;
+                                                    return result;
+                                                }
+                                            } else {
+                                                if (s->GetProperty(p)) {
+                                                    result = s;
+                                                    return result;
+                                                }
                                             }
                                         }
                                     }
@@ -72,10 +79,19 @@ namespace DeviousDevices {
         }
         return result;
     }
-
+    bool GetWornObjectPropertyExists(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                  RE::BSFixedString script, RE::BSFixedString property) 
+    {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return true;
+            }
+        }
+        return false;
+    }
     bool SetWornObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                   RE::BSFixedString script, RE::BSFixedString property, int value) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetSInt(value);
                 return true;
@@ -86,7 +102,7 @@ namespace DeviousDevices {
 
     bool SetWornObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                     RE::BSFixedString script, RE::BSFixedString property, float value) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetFloat(value);
                 return true;
@@ -97,7 +113,7 @@ namespace DeviousDevices {
 
     bool SetWornObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                      RE::BSFixedString script, RE::BSFixedString property, RE::BSFixedString value) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetString(value);
                 return true;
@@ -107,7 +123,7 @@ namespace DeviousDevices {
     }
     bool SetWornObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                    RE::BSFixedString script, RE::BSFixedString property, bool value) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetBool(value);
                 return true;
@@ -117,7 +133,7 @@ namespace DeviousDevices {
     }
     int GetWornObjectPropertyType(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                  RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return (int)s->GetProperty(property)->GetType().GetRawType();
             }
@@ -126,7 +142,7 @@ namespace DeviousDevices {
     }
     RE::TESForm* GetWornObjectPropertyObject(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                              RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property) && s->GetProperty(property)->GetObject()) {
                 return (RE::TESForm*)s->GetProperty(property)->GetObject()->Resolve(
                     (RE::VMTypeID)RE::TESForm::FORMTYPE);
@@ -136,7 +152,7 @@ namespace DeviousDevices {
     }
     int GetWornObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                  RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetSInt();
             }
@@ -146,7 +162,7 @@ namespace DeviousDevices {
 
     float GetWornObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                      RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetFloat();
             }
@@ -156,7 +172,7 @@ namespace DeviousDevices {
     RE::BSFixedString GetWornObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor,
                                                   RE::TESObjectARMO* armor, RE::BSFixedString script,
                                                   RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetString();
             }
@@ -165,7 +181,7 @@ namespace DeviousDevices {
     }
     bool GetWornObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                    RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script)) {
+        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetBool();
             }
