@@ -1,5 +1,15 @@
 scriptName zadNativeFunctions Hidden
 
+Form Function GetWornObjectPropertyObject(Actor a_actor, Armor a_armor, string script, string p) global native
+string Function GetWornObjectPropertyString(Actor a_actor, Armor a_armor, string script, string p) global native
+int Function GetWornObjectPropertyInt(Actor a_actor, Armor a_armor, string script, string p) global native
+float Function GetWornObjectPropertyFloat(Actor a_actor, Armor a_armor, string script, string p) global native
+bool Function GetWornObjectPropertyBool(Actor a_actor, Armor a_armor, string script, string p) global native
+bool Function SetWornObjectPropertyInt(Actor a_actor, Armor a_armor, string script, string p, int value) global native
+bool Function SetWornObjectPropertyString(Actor a_actor, Armor a_armor, string script, string p, string value) global native
+bool Function SetWornObjectPropertyFloat(Actor a_actor, Armor a_armor, string script, string p,float value) global native
+bool Function SetWornObjectPropertyBool(Actor a_actor, Armor a_armor, string script, string p, bool value) global native
+
 Form Function FindMatchingDevice(Actor akActor, Keyword kwd)  global native
 bool Function FormHasKeywordString(form theForm, string kwd)  global native
 bool Function Print(string msg) global native
