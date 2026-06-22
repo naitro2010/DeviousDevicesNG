@@ -13,7 +13,7 @@ using namespace REL;
 using namespace SKSE;
 namespace DeviousDevices {
     constexpr std::string_view PapyrusClass = "zadNativeFunctions";
-    RE::BSScript::Object* GetWornObjectScript(RE::Actor* actor, RE::TESObjectARMO* armor,
+    RE::BSScript::Object* GetInventoryObjectScript(RE::Actor* actor, RE::TESObjectARMO* armor,
                                               RE::BSFixedString scriptClass, RE::BSFixedString p) {
         RE::BSScript::Object* result = nullptr;
         auto VM = RE::BSScript::Internal::VirtualMachine::GetSingleton();
@@ -79,19 +79,19 @@ namespace DeviousDevices {
         }
         return result;
     }
-    bool GetWornObjectPropertyExists(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    bool GetInventoryObjectPropertyExists(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                   RE::BSFixedString script, RE::BSFixedString property) 
     {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return true;
             }
         }
         return false;
     }
-    bool SetWornObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    bool SetInventoryObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                   RE::BSFixedString script, RE::BSFixedString property, int value) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetSInt(value);
                 return true;
@@ -100,9 +100,9 @@ namespace DeviousDevices {
         return false;
     }
 
-    bool SetWornObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    bool SetInventoryObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                     RE::BSFixedString script, RE::BSFixedString property, float value) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetFloat(value);
                 return true;
@@ -111,9 +111,9 @@ namespace DeviousDevices {
         return false;
     }
 
-    bool SetWornObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    bool SetInventoryObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                      RE::BSFixedString script, RE::BSFixedString property, RE::BSFixedString value) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetString(value);
                 return true;
@@ -121,9 +121,9 @@ namespace DeviousDevices {
         }
         return false;
     }
-    bool SetWornObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    bool SetInventoryObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                    RE::BSFixedString script, RE::BSFixedString property, bool value) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 s->GetProperty(property)->SetBool(value);
                 return true;
@@ -131,18 +131,18 @@ namespace DeviousDevices {
         }
         return false;
     }
-    int GetWornObjectPropertyType(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    int GetInventoryObjectPropertyType(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                  RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return (int)s->GetProperty(property)->GetType().GetRawType();
             }
         }
         return 0;
     }
-    RE::TESForm* GetWornObjectPropertyObject(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    RE::TESForm* GetInventoryObjectPropertyObject(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                              RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property) && s->GetProperty(property)->GetObject()) {
                 return (RE::TESForm*)s->GetProperty(property)->GetObject()->Resolve(
                     (RE::VMTypeID)RE::TESForm::FORMTYPE);
@@ -150,9 +150,9 @@ namespace DeviousDevices {
         }
         return nullptr;
     }
-    int GetWornObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    int GetInventoryObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                  RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetSInt();
             }
@@ -160,28 +160,28 @@ namespace DeviousDevices {
         return 0;
     }
 
-    float GetWornObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    float GetInventoryObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                      RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetFloat();
             }
         }
         return 0.0;
     }
-    RE::BSFixedString GetWornObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor,
+    RE::BSFixedString GetInventoryObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor,
                                                   RE::TESObjectARMO* armor, RE::BSFixedString script,
                                                   RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetString();
             }
         }
         return "";
     }
-    bool GetWornObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+    bool GetInventoryObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
                                    RE::BSFixedString script, RE::BSFixedString property) {
-        if (auto s = GetWornObjectScript(actor, armor, script,property)) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
             if (s->GetProperty(property)) {
                 return s->GetProperty(property)->GetBool();
             }
@@ -281,16 +281,16 @@ bool DeviousDevices::RegisterFunctions(IVirtualMachine* vm) {
     #endif
 
     //Papyrus.h
-    REGISTERPAPYRUSFUNC(GetWornObjectPropertyType, false);
-    REGISTERPAPYRUSFUNC(SetWornObjectPropertyInt, false);
-    REGISTERPAPYRUSFUNC(SetWornObjectPropertyFloat, false);
-    REGISTERPAPYRUSFUNC(SetWornObjectPropertyString, false);
-    REGISTERPAPYRUSFUNC(SetWornObjectPropertyBool, false);
-    REGISTERPAPYRUSFUNC(GetWornObjectPropertyInt, false);
-    REGISTERPAPYRUSFUNC(GetWornObjectPropertyFloat, false);
-    REGISTERPAPYRUSFUNC(GetWornObjectPropertyString, false);
-    REGISTERPAPYRUSFUNC(GetWornObjectPropertyBool, false);
-    REGISTERPAPYRUSFUNC(GetWornObjectPropertyObject, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyType, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyInt, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyFloat, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyString, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyBool, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyInt, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyFloat, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyString, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyBool, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyObject, false);
     REGISTERPAPYRUSFUNC(FormHasKeywordString,true);
     REGISTERPAPYRUSFUNC(FindMatchingDevice,true);
     REGISTERPAPYRUSFUNC(CTrace,true);
