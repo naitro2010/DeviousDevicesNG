@@ -6,14 +6,188 @@
 #include "LibFunctions.h"
 #include <functional>
 #include <algorithm>
-
+#undef GetObject
 using namespace RE;
 using namespace RE::BSScript;
 using namespace REL;
 using namespace SKSE;
 namespace DeviousDevices {
     constexpr std::string_view PapyrusClass = "zadNativeFunctions";
+    RE::BSScript::Object* GetInventoryObjectScript(RE::Actor* actor, RE::TESObjectARMO* armor,
+                                              RE::BSFixedString scriptClass, RE::BSFixedString p) {
+        RE::BSScript::Object* result = nullptr;
+        auto VM = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+        if (!VM) return result;
+        auto BP = VM->GetObjectBindPolicy();
+        if (!BP) return result;
+        if (!BP->bindInterface) return result;
+        if (actor && armor) {
+            if (actor->GetInventory().contains(armor)) {
+                if (!actor->GetInventoryChanges() || !actor->GetInventoryChanges()->entryList) {
+                    return nullptr;
+                }
 
+                for (auto& inventoryEntry : *actor->GetInventoryChanges()->entryList) {
+                    if (inventoryEntry->object != armor) {
+                        continue;
+                    }
+                    for (auto& extraList : *inventoryEntry->extraLists) {
+                        for (auto& extraData : *extraList) {
+                            auto extra = &extraData;
+                            while (extra) {
+                                if (extra->GetType() == RE::ExtraDataType::kUniqueID) {
+                                    auto extraID = (RE::ExtraUniqueID*)extra;
+                                    if (!VM->attachedScripts.contains(((uint64_t)actor->formID) |
+                                                                      ((uint64_t)0x0001000000000000ULL) |
+                                                                      (((uint64_t)(extraID->uniqueID)) << 32))) {
+                                        continue;
+                                    }
+                                    auto attached_scripts = VM->attachedScripts.find(
+                                        ((uint64_t)actor->formID) | ((uint64_t)0x0001000000000000ULL) |
+                                        (((uint64_t)(extraID->uniqueID)) << 32));
+
+                                    auto attached_script_count = attached_scripts->second.size();
+
+                                    for (uint32_t s_i = 0; s_i < attached_script_count; s_i++) {
+                                        auto& script = attached_scripts->second[s_i];
+                                        if (auto s = script.get()) {
+                                            if (scriptClass != RE::BSFixedString("")) {
+                                                if (RE::BSFixedString(s->type->name) == scriptClass) {
+                                                    result = s;
+                                                    return result;
+                                                }
+                                            } else {
+                                                if (s->GetProperty(p)) {
+                                                    result = s;
+                                                    return result;
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+
+                                if (extra == extra->next) {
+                                    break;
+                                }
+                                extra = extra->next;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+    bool GetInventoryObjectPropertyExists(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                  RE::BSFixedString script, RE::BSFixedString property) 
+    {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    bool SetInventoryObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                  RE::BSFixedString script, RE::BSFixedString property, int value) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                s->GetProperty(property)->SetSInt(value);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool SetInventoryObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                    RE::BSFixedString script, RE::BSFixedString property, float value) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                s->GetProperty(property)->SetFloat(value);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool SetInventoryObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                     RE::BSFixedString script, RE::BSFixedString property, RE::BSFixedString value) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                s->GetProperty(property)->SetString(value);
+                return true;
+            }
+        }
+        return false;
+    }
+    bool SetInventoryObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                   RE::BSFixedString script, RE::BSFixedString property, bool value) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                s->GetProperty(property)->SetBool(value);
+                return true;
+            }
+        }
+        return false;
+    }
+    int GetInventoryObjectPropertyType(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                 RE::BSFixedString script, RE::BSFixedString property) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return (int)s->GetProperty(property)->GetType().GetRawType();
+            }
+        }
+        return 0;
+    }
+    RE::TESForm* GetInventoryObjectPropertyObject(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                             RE::BSFixedString script, RE::BSFixedString property) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property) && s->GetProperty(property)->GetObject()) {
+                return (RE::TESForm*)s->GetProperty(property)->GetObject()->Resolve(
+                    (RE::VMTypeID)RE::TESForm::FORMTYPE);
+            }
+        }
+        return nullptr;
+    }
+    int GetInventoryObjectPropertyInt(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                 RE::BSFixedString script, RE::BSFixedString property) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return s->GetProperty(property)->GetSInt();
+            }
+        }
+        return 0;
+    }
+
+    float GetInventoryObjectPropertyFloat(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                     RE::BSFixedString script, RE::BSFixedString property) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return s->GetProperty(property)->GetFloat();
+            }
+        }
+        return 0.0;
+    }
+    RE::BSFixedString GetInventoryObjectPropertyString(RE::StaticFunctionTag* base, RE::Actor* actor,
+                                                  RE::TESObjectARMO* armor, RE::BSFixedString script,
+                                                  RE::BSFixedString property) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return s->GetProperty(property)->GetString();
+            }
+        }
+        return "";
+    }
+    bool GetInventoryObjectPropertyBool(RE::StaticFunctionTag* base, RE::Actor* actor, RE::TESObjectARMO* armor,
+                                   RE::BSFixedString script, RE::BSFixedString property) {
+        if (auto s = GetInventoryObjectScript(actor, armor, script,property)) {
+            if (s->GetProperty(property)) {
+                return s->GetProperty(property)->GetBool();
+            }
+        }
+        return false;
+    }
     bool FormHasKeywordString(StaticFunctionTag* base, TESForm* obj, std::string kwd) {
         if (!obj) {
             LOG("FormHasKeywordString received none obj.");
@@ -107,6 +281,16 @@ bool DeviousDevices::RegisterFunctions(IVirtualMachine* vm) {
     #endif
 
     //Papyrus.h
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyType, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyInt, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyFloat, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyString, false);
+    REGISTERPAPYRUSFUNC(SetInventoryObjectPropertyBool, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyInt, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyFloat, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyString, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyBool, false);
+    REGISTERPAPYRUSFUNC(GetInventoryObjectPropertyObject, false);
     REGISTERPAPYRUSFUNC(FormHasKeywordString,true);
     REGISTERPAPYRUSFUNC(FindMatchingDevice,true);
     REGISTERPAPYRUSFUNC(CTrace,true);
