@@ -916,6 +916,9 @@ Bool Function SexScene(Actor Partner, String AnimationName = "")
 	if ani != ""
 		Sanims[0] = libs.SexLab.GetAnimationObject(ani)	
 		if Sanims[0] == None
+			Sanims[0] = libs.SexLab.GetAnimationByRegistry(ani)
+		endif
+		if Sanims[0] == None
 			If AnimationName != ""
 				; it was a custom animation, fall back to random
 				Sanims[0] = libs.SexLab.GetAnimationObject(PickRandomSexScene())	
